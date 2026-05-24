@@ -1,0 +1,10 @@
+[  884097ms] [LOG] Attempting reconnect in 138.05907320055442ms @ https://unpkg.com/convex@1.12.0/dist/browser.bundle.js:1432
+[  886045ms] [LOG] WebSocket reconnected @ https://unpkg.com/convex@1.12.0/dist/browser.bundle.js:1355
+[  905870ms] [WARNING] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation @ https://cdn.tailwindcss.com/:63
+[  906249ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:4173/index.html?skipIntro=1&fresh=1:0
+[  906249ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:4173/index.html?skipIntro=1&fresh=1:0
+[  906250ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:4173/index.html?skipIntro=1&fresh=1:0
+[  906250ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:4173/index.html?skipIntro=1&fresh=1:0
+[  906250ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:4173/index.html?skipIntro=1&fresh=1:0
+[  906250ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:4173/index.html?skipIntro=1&fresh=1:0
+[  906250ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:4173/index.html?skipIntro=1&fresh=1:0
