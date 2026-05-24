@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Privacy Policy - Clear, Standard, and Honest - SnipVault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850&family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 font-inter text-gray-800 overflow-x-hidden min-h-screen">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
+        <!-- HEADER / NAVIGATION -->
+        <header class="flex justify-between items-center bg-white p-4 rounded-xl shadow-md mb-8 border border-gray-100 dev-card">
+            <a href="index.html" class="flex items-center space-x-2 hover:opacity-90">
+                <svg class="h-8 w-auto text-indigo-600" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M10 20C10 14.4772 14.4772 10 20 10H80C85.5228 10 90 14.4772 90 20V30H70C64.4772 30 60 34.4772 60 40V80C60 85.5228 64.4772 90 70 90H80C85.5228 90 90 85.5228 90 80V70H30C24.4772 70 20 65.5228 20 60V20H10ZM30 40H50V60H30V40Z"/>
+                </svg>
+                <span class="text-2xl font-bold font-pacifico text-indigo-650">SnipVault</span>
+            </a>
+            
+            <a href="index.html" id="back-to-vault-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-750 font-semibold py-1.5 px-4 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1 dev-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Vault</span>
+            </a>
+        </header>
+
+        <!-- MAIN CARD -->
+        <main class="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-100 dev-card">
+            
+            <!-- Terminal Header Detail -->
+            <div class="bg-gray-900 text-green-400 p-3 font-mono text-xs mb-6 flex justify-between items-center">
+                <span>rosy@snipvault:~$ cat privacy_policy.txt</span>
+                <span class="text-gray-500">SECURE SHELL</span>
+            </div>
+
+            <article class="prose max-w-none">
+                <h1 class="text-3xl font-extrabold text-gray-800 mb-6 font-mono border-b pb-3 flex items-center">
+                    <i class="fas fa-shield-alt text-indigo-600 mr-2"></i> Privacy Shield & Policy
+                </h1>
+                
+                <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-none mb-6 font-mono text-xs text-red-800 dev-card">
+                    <strong>OUR CORE COMMITMENT:</strong> We do not sell your personal details, email address, code files, or usage profiles to anyone. Period. We host no trackers, cookie systems, or targeting engines.
+                </div>
+
+                <p class="text-gray-600 mb-6 leading-relaxed">
+                    Most companies hide their data mining and tracking policies inside a 50-page wall of legalese. 
+                    We believe in total transparency. SnipVault is an open platform built for developers, and our privacy model is simple: <strong>your data belongs entirely to you</strong>. 
+                    Below is the A-Z breakdown of exactly what we collect, how it is handled, and how you retain full control.
+                </p>
+
+                <h2 class="text-xl font-bold text-gray-800 mt-8 mb-4 font-mono flex items-center">
+                    <i class="fas fa-database text-indigo-600 mr-2"></i> Database Schema: What We Store
+                </h2>
+                <p class="text-gray-600 mb-4 leading-relaxed">
+                    If you register a secure cloud synchronization profile, we store exactly the following attributes on our Convex database cluster. No more, no less:
+                </p>
+
+                <!-- Database Items Table -->
+                <div class="overflow-x-auto my-6">
+                    <table class="min-w-full text-xs text-left">
+                        <thead class="bg-gray-150 text-gray-800 font-bold uppercase">
+                            <tr>
+                                <th class="p-3">Attribute</th>
+                                <th class="p-3">Collected Value</th>
+                                <th class="p-3">Purpose & Encryption</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 text-gray-650 font-mono">
+                            <tr class="hover:bg-indigo-50/30">
+                                <td class="p-3 font-semibold text-gray-800">Email Address</td>
+                                <td class="p-3">user@example.com</td>
+                                <td class="p-3">Used strictly for account verification and password resets.</td>
+                            </tr>
+                            <tr class="hover:bg-indigo-50/30">
+                                <td class="p-3 font-semibold text-gray-800">Password hash</td>
+                                <td class="p-3">Argon2/Pbkdf2 (Encrypted)</td>
+                                <td class="p-3">We securely salt and hash passwords. We can never view plain text passwords.</td>
+                            </tr>
+                            <tr class="hover:bg-indigo-50/30">
+                                <td class="p-3 font-semibold text-gray-800">Full Name</td>
+                                <td class="p-3">John Doe</td>
+                                <td class="p-3">Used to personalize your vault workspace greeting.</td>
+                            </tr>
+                            <tr class="hover:bg-indigo-50/30">
+                                <td class="p-3 font-semibold text-gray-800">DOB & Calculated Age</td>
+                                <td class="p-3">YYYY-MM-DD (Age integer)</td>
+                                <td class="p-3">Required under data security laws to ensure user age limits.</td>
+                            </tr>
+                            <tr class="hover:bg-indigo-50/30">
+                                <td class="p-3 font-semibold text-gray-800">Profile Photo</td>
+                                <td class="p-3">Base64 JPEG (Optional)</td>
+                                <td class="p-3">Allows workspace avatar personalization. Crop controls run completely on your client.</td>
+                            </tr>
+                            <tr class="hover:bg-indigo-50/30">
+                                <td class="p-3 font-semibold text-gray-800">Categories & Snippets</td>
+                                <td class="p-3">User-entered text, urls, notes</td>
+                                <td class="p-3">The payload blocks of your snippets, securely matched to your private account id.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <h2 class="text-xl font-bold text-gray-800 mt-8 mb-4 font-mono flex items-center">
+                    <i class="fas fa-cookie-bite text-indigo-600 mr-2"></i> Cookies, Tracking, and Storage
+                </h2>
+                <ul class="list-disc list-inside text-sm text-gray-650 space-y-3 mb-6">
+                    <li><strong class="text-gray-800 font-mono">No Tracking Cookies:</strong> We host zero analytics scripts (like Google Analytics, Hotjar, or Mixpanel) and zero advertising cookies. We have no trackers trying to study your behavior or target ads to you.</li>
+                    <li><strong class="text-gray-800 font-mono">Active Session Token:</strong> We save a single secure cryptographic signature string inside your browser's <code class="bg-gray-100 px-1 rounded text-red-650">localStorage</code>. This token functions solely to keep you logged in to your private vault across page reloads. If you sign out, this token is instantly wiped from your browser memory.</li>
+                </ul>
+
+                <h2 class="text-xl font-bold text-gray-800 mt-8 mb-4 font-mono flex items-center">
+                    <i class="fas fa-biohazard text-indigo-600 mr-2"></i> Full Sovereignty: Export and Purge
+                </h2>
+                <p class="text-gray-600 mb-4 leading-relaxed">
+                    Under European GDPR guidelines and global data integrity best practices, we believe you should have complete command over your data footprints:
+                </p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 my-6">
+                    <div class="p-5 bg-gray-50 border border-gray-200 dev-card">
+                        <h3 class="text-md font-bold text-gray-900 font-mono mb-2 flex items-center">
+                            <i class="fas fa-file-download mr-1.5 text-indigo-650"></i> GDPR Access Export
+                        </h3>
+                        <p class="text-xs text-gray-600 leading-relaxed">
+                            Under the "Manage Account" dashboard tab, you can click <code class="bg-gray-100 px-1 text-indigo-600 rounded">Download Data (JSON)</code>. 
+                            Our cloud system compiles every folder, profile attribute, creation timestamp, and saved code snippet into a raw JSON file and downloads it instantly.
+                        </p>
+                    </div>
+
+                    <div class="p-5 bg-gray-50 border border-gray-200 dev-card">
+                        <h3 class="text-md font-bold text-gray-900 font-mono mb-2 flex items-center">
+                            <i class="fas fa-trash-alt mr-1.5 text-red-650"></i> Complete Profile Purge
+                        </h3>
+                        <p class="text-xs text-gray-600 leading-relaxed">
+                            If you decide to leave SnipVault, we make it easy. Under "Manage Account", trigger the <code class="bg-gray-100 px-1 text-red-600 rounded">Delete My Account</code> option. 
+                            After a 5-second safety countdown, we completely wipe all your records from Convex cloud databases. This action is permanent and completely irreversible.
+                        </p>
+                    </div>
+                </div>
+
+                <h2 class="text-xl font-bold text-gray-800 mt-8 mb-4 font-mono flex items-center">
+                    <i class="fas fa-user-shield text-indigo-600 mr-2"></i> Security and Audits
+                </h2>
+                <p class="text-gray-600 mb-6 leading-relaxed">
+                    Because our database engine operates via secure serverless Convex queries, every operation is validated by structural schema guards. 
+                    Other users can never access, query, or view your categories or snippets. 
+                    If you are concerned about cloud networks, you can simply use SnipVault in **Guest Mode**. 
+                    In Guest Mode, your data remains 100% offline inside your computer's browser storage and is never sent to our databases.
+                </p>
+            </article>
+
+        </main>
+
+        <!-- FOOTER NAVIGATION -->
+        <footer class="text-center mt-16 py-8 border-t-2 border-dashed border-indigo-200">
+            <div class="flex flex-wrap justify-center gap-6 mb-4 text-xs font-mono font-semibold uppercase tracking-wider text-indigo-700">
+                <a href="about.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-info-circle"></i> About</a>
+                <a href="pricing.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-tags"></i> Pricing</a>
+                <a href="opensource.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-code"></i> Open Source</a>
+                <a href="privacy.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-shield-alt text-indigo-850"></i> Privacy Policy</a>
+                <a href="terms.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-file-contract"></i> Terms</a>
+            </div>
+            <p class="text-xs text-gray-500 font-mono mt-2">&copy; <span id="current-year"></span> SnipVault. Crafted with <i class="fas fa-heart text-red-500"></i>. Created by Rosy.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>

@@ -208,3 +208,173 @@ input:focus, textarea:focus, select:focus { outline: none; }
 #app-container.hidden-for-auth {
   display: none !important; /* Use important if Tailwind opacity is fighting */
 }
+
+/* ==========================================
+   DEVELOPER-FOCUSED & SHARP EDGES SYSTEM
+   ========================================== */
+
+/* Blueprint/Grid backdrop overlay for body */
+body {
+  background-image: 
+    linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-attachment: fixed;
+}
+
+/* Global sharp edges override */
+*, *::before, *::after {
+  border-radius: 0px !important;
+}
+
+/* Deep charcoal borders & flat neo-brutalist offset shadows for cards and screens */
+#input-section, #output-section, #detail-view, #account-view, 
+#auth-view > div, #guest-warning-modal-content, #migration-modal-content, 
+#forgot-password-modal-content, #delete-warning-modal-content, .dev-card {
+  border: 2px solid #1f2937 !important;
+  box-shadow: 6px 6px 0px 0px #4f46e5 !important;
+  background-color: #ffffff !important;
+  transition: box-shadow 0.2s ease;
+}
+
+/* Double borders or hover effects on active panels for tech look */
+#input-section:hover, #output-section:hover, #detail-view:hover, #account-view:hover {
+  box-shadow: 8px 8px 0px 0px #4f46e5 !important;
+}
+
+/* Custom developer terminal category tag */
+.snippet-category-tag {
+  font-family: monospace;
+  font-weight: 700 !important;
+  border: 1px solid #1f2937 !important;
+  background-color: #e0e7ff !important;
+  color: #1e1b4b !important;
+  border-radius: 0px !important;
+  padding: 0.25rem 0.6rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* Developer input, textarea, and select enhancements */
+input[type="text"], input[type="email"], input[type="password"], input[type="url"], input[type="date"], textarea, select {
+  border: 2px solid #cbd5e1 !important;
+  border-radius: 0px !important;
+  font-family: monospace;
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  transition: all 0.15s ease-in-out;
+}
+input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focus, input[type="url"]:focus, input[type="date"]:focus, textarea:focus, select:focus {
+  border-color: #4f46e5 !important;
+  box-shadow: 2px 2px 0px 0px rgba(79, 70, 229, 0.25) !important;
+  outline: none !important;
+}
+
+/* Sharp, solid border & flat shadow layout for ALL action buttons */
+#save-snippet-btn, #add-category-btn, #logout-btn, #toggle-account-btn, 
+#guest-login-btn, #confirm-guest-btn, #cancel-guest-btn, 
+#migrate-submit-btn, #close-migrate-btn, #download-data-btn, 
+#delete-account-trigger-btn, #verify-email-btn, #forgot-password-btn,
+.action-btn, #back-to-list-btn, #edit-snippet-from-view-btn, 
+#save-edited-snippet-btn, #cancel-edit-snippet-btn, #back-from-account-btn,
+#save-crop-btn, #cancel-crop-btn, #revoke-all-others-btn,
+.dev-btn {
+  border: 2px solid #1f2937 !important;
+  box-shadow: 3px 3px 0px 0px #1f2937 !important;
+  font-family: monospace;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 0px !important;
+  transition: all 0.1s ease !important;
+}
+
+#save-snippet-btn:hover, #add-category-btn:hover, #migrate-submit-btn:hover, 
+#confirm-guest-btn:hover, #download-data-btn:hover, 
+.action-btn:hover, #back-to-list-btn:hover, #edit-snippet-from-view-btn:hover, 
+#save-edited-snippet-btn:hover, #back-from-account-btn:hover,
+.dev-btn:hover {
+  transform: translate(-1px, -1px) !important;
+  box-shadow: 4px 4px 0px 0px #1f2937 !important;
+}
+
+#save-snippet-btn:active, #add-category-btn:active, #migrate-submit-btn:active, 
+#confirm-guest-btn:active, #download-data-btn:active, 
+.action-btn:active, #back-to-list-btn:active, #edit-snippet-from-view-btn:active, 
+#save-edited-snippet-btn:active, #back-from-account-btn:active,
+.dev-btn:active {
+  transform: translate(1px, 1px) !important;
+  box-shadow: 1px 1px 0px 0px #1f2937 !important;
+}
+
+/* Red-hued danger buttons override for developer consistency */
+#logout-btn, #delete-account-trigger-btn, .delete-btn, #confirm-delete-account-btn {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+}
+#logout-btn:hover, #delete-account-trigger-btn:hover, .delete-btn:hover {
+  background-color: #fca5a5 !important;
+}
+
+/* Green-hued success buttons override */
+#add-category-btn, #confirm-guest-btn, #migrate-submit-btn, #save-crop-btn {
+  background-color: #dcfce7 !important;
+  color: #166534 !important;
+}
+#add-category-btn:hover, #confirm-guest-btn:hover, #migrate-submit-btn:hover, #save-crop-btn:hover {
+  background-color: #bbf7d0 !important;
+}
+
+/* Amber-hued edit buttons override */
+.edit-btn, #edit-snippet-from-view-btn {
+  background-color: #fef3c7 !important;
+  color: #92400e !important;
+}
+.edit-btn:hover, #edit-snippet-from-view-btn:hover {
+  background-color: #fde68a !important;
+}
+
+/* Dev notifications */
+.notification {
+  border: 2px solid #1f2937 !important;
+  border-radius: 0px !important;
+  box-shadow: 4px 4px 0px 0px rgba(0, 0, 0, 0.15) !important;
+  font-family: monospace;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #1f2937 !important;
+}
+.notification.success { background-color: #dcfce7 !important; border-color: #166534 !important; }
+.notification.error { background-color: #fee2e2 !important; border-color: #991b1b !important; }
+.notification.info { background-color: #e0f2fe !important; border-color: #0369a1 !important; }
+
+/* Dev sessions table override */
+table {
+  border: 2px solid #cbd5e1 !important;
+}
+th {
+  background-color: #f1f5f9 !important;
+  border-bottom: 2px solid #1f2937 !important;
+  color: #1f2937 !important;
+  font-family: monospace;
+  font-weight: 700 !important;
+}
+td {
+  border-bottom: 1px solid #e2e8f0 !important;
+  font-family: monospace;
+}
+
+/* Monospace previews for list and details */
+.snippet-text-preview, #detail-text-view {
+  font-family: monospace !important;
+  background-color: #f8fafc !important;
+  border: 1px solid #e2e8f0 !important;
+  padding: 0.75rem !important;
+}
+
+/* Overriding avatars as square developer containers */
+#header-avatar, #header-avatar-placeholder, #profile-avatar-img, #profile-avatar-placeholder {
+  border-radius: 0px !important;
+  border: 2px solid #1f2937 !important;
+}
+

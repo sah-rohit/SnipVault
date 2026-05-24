@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Source - Audit, Fork, and Contribute to SnipVault</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850&family=Pacifico&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 font-inter text-gray-800 overflow-x-hidden min-h-screen">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl">
+        <!-- HEADER / NAVIGATION -->
+        <header class="flex justify-between items-center bg-white p-4 rounded-xl shadow-md mb-8 border border-gray-100 dev-card">
+            <a href="index.html" class="flex items-center space-x-2 hover:opacity-90">
+                <svg class="h-8 w-auto text-indigo-600" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M10 20C10 14.4772 14.4772 10 20 10H80C85.5228 10 90 14.4772 90 20V30H70C64.4772 30 60 34.4772 60 40V80C60 85.5228 64.4772 90 70 90H80C85.5228 90 90 85.5228 90 80V70H30C24.4772 70 20 65.5228 20 60V20H10ZM30 40H50V60H30V40Z"/>
+                </svg>
+                <span class="text-2xl font-bold font-pacifico text-indigo-650">SnipVault</span>
+            </a>
+            
+            <a href="index.html" id="back-to-vault-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-750 font-semibold py-1.5 px-4 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1 dev-btn">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Vault</span>
+            </a>
+        </header>
+
+        <!-- MAIN CARD -->
+        <main class="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-100 dev-card">
+            
+            <!-- Terminal Header Detail -->
+            <div class="bg-gray-900 text-green-400 p-3 font-mono text-xs mb-6 flex justify-between items-center">
+                <span>rosy@snipvault:~$ git show-branch main</span>
+                <span class="text-gray-500">commit-9fa8e71c</span>
+            </div>
+
+            <article class="prose max-w-none">
+                <h1 class="text-3xl font-extrabold text-gray-800 mb-6 font-mono border-b pb-3 flex items-center">
+                    <i class="fas fa-code-branch text-indigo-600 mr-2"></i> Open Source Registry
+                </h1>
+                
+                <p class="text-gray-600 mb-6 leading-relaxed">
+                    At SnipVault, we believe that security and auditability are non-negotiable for developers. 
+                    If you are trusting a service with your ideas, configuration keys, and code snippets, you deserve the ability to verify exactly how your data is encrypted, synced, and validated. 
+                    SnipVault is <strong>100% Open Source</strong> under the permissive MIT License. You can review the code, fork the repository, host your own Convex backend cluster, or run SnipVault completely isolated offline.
+                </p>
+
+                <h2 class="text-xl font-bold text-gray-800 mt-8 mb-4 font-mono flex items-center">
+                    <i class="fas fa-scroll text-indigo-600 mr-2"></i> Permissive MIT License
+                </h2>
+                <p class="text-gray-600 mb-4 leading-relaxed">
+                    Our software license is simple, lightweight, and grants you complete freedom:
+                </p>
+
+                <!-- Scrollable License box -->
+                <pre class="bg-gray-50 border border-gray-250 p-4 font-mono text-xs text-gray-700 max-h-48 overflow-y-auto whitespace-pre-wrap rounded-none shadow-inner mb-6">
+MIT License
+
+Copyright (c) 2026 Rosy
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+                </pre>
+
+                <h2 class="text-xl font-bold text-gray-800 mt-8 mb-4 font-mono flex items-center">
+                    <i class="fas fa-terminal text-indigo-600 mr-2"></i> Local Development Sandbox Setup
+                </h2>
+                <p class="text-gray-600 mb-4 leading-relaxed">
+                    Want to run a private instance of SnipVault? Follow these quick commands to spin up your local server and connect it to your own serverless Convex database:
+                </p>
+
+                <div class="bg-gray-900 text-green-400 p-4 font-mono text-xs space-y-3 mb-6 dev-card">
+                    <div>
+                        <p class="text-gray-500"># 1. Clone your private repository or copy directory files</p>
+                        <p>git clone https://github.com/sah-rohit/SnipVault.git && cd SnipVault</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500"># 2. Install dev dependencies (Convex Client CLI, etc)</p>
+                        <p>npm install</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500"># 3. Create your secure local config credentials</p>
+                        <p>cp config.example.js config.js</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500"># 4. Bootstrap your serverless Convex backend database</p>
+                        <p>npx convex dev</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500"># 5. Populate your new database URL inside config.js</p>
+                        <p>cat config.js</p>
+                        <p class="text-yellow-400">const CONVEX_URL = "https://your-convex-deployment.convex.cloud";</p>
+                    </div>
+                    <div>
+                        <p class="text-gray-500"># 6. Run the local dashboard dev server</p>
+                        <p>npm run dev</p>
+                    </div>
+                </div>
+
+                <h2 class="text-xl font-bold text-gray-800 mt-8 mb-4 font-mono flex items-center">
+                    <i class="fas fa-users text-indigo-600 mr-2"></i> Auditability and Transparency
+                </h2>
+                <p class="text-gray-600 mb-4 leading-relaxed">
+                    By open-sourcing SnipVault, we verify:
+                </p>
+                <ul class="list-disc list-inside text-sm text-gray-650 space-y-2 mb-6">
+                    <li><strong class="text-gray-800 font-mono">Zero Background Logging:</strong> SnipVault only saves snippets when you explicitly click "Save Snippet" or sync from your local guest memory. We have zero telemetry, usage tracking, or keystroke recorders.</li>
+                    <li><strong class="text-gray-800 font-mono">Secure Hashing:</strong> All login authentication flows are processed using secure cryptographic standards through our Convex backend. We never store plain passwords.</li>
+                    <li><strong class="text-gray-800 font-mono">No Lock-In:</strong> The data model utilizes clean JSON. Because the codebase is fully open, you can run exports at any time and import the structures into any IDE plugin or other editor tools easily.</li>
+                </ul>
+            </article>
+
+        </main>
+
+        <!-- FOOTER NAVIGATION -->
+        <footer class="text-center mt-16 py-8 border-t-2 border-dashed border-indigo-200">
+            <div class="flex flex-wrap justify-center gap-6 mb-4 text-xs font-mono font-semibold uppercase tracking-wider text-indigo-700">
+                <a href="about.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-info-circle"></i> About</a>
+                <a href="pricing.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-tags"></i> Pricing</a>
+                <a href="opensource.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-code text-indigo-850"></i> Open Source</a>
+                <a href="privacy.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+                <a href="terms.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-file-contract"></i> Terms</a>
+            </div>
+            <p class="text-xs text-gray-500 font-mono mt-2">&copy; <span id="current-year"></span> SnipVault. Crafted with <i class="fas fa-heart text-red-500"></i>. Created by Rosy.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('current-year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
