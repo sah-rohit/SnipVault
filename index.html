@@ -3,18 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnipVault - Your Contextual Snippet Saver</title>
+    <title>SnipVault - Your Contextual Snippet Sanctuary</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850&family=Pacifico&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-    <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script defer src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    <!-- Convex Configuration and SDK -->
+    <script src="config.js" onerror="window.CONVEX_CONFIG_ERROR = true;"></script>
+    <script src="https://unpkg.com/convex@1.12.0/dist/browser.bundle.js"></script>
 </head>
 <body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 font-inter text-gray-800 overflow-x-hidden">
     
+    <!-- Setup Error Screen (shown when config.js is missing or invalid) -->
+    <div id="setup-error-screen" class="hidden fixed inset-0 bg-gradient-to-br from-red-50 to-rose-100 flex flex-col justify-center items-center p-4 z-[9999]">
+        <div class="bg-white p-8 sm:p-10 rounded-2xl shadow-2xl max-w-xl w-full text-center border-t-8 border-rose-500 transform transition-all duration-300 hover:scale-[1.01]">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-rose-100 text-rose-600 mb-6">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+            </div>
+            <h2 class="text-3xl font-extrabold text-gray-800 mb-4 font-inter">Configuration Required</h2>
+            <p class="text-gray-600 mb-6 text-md leading-relaxed">
+                We couldn't detect your local <code class="bg-gray-100 px-2 py-1 rounded text-rose-600 font-mono text-sm">config.js</code> file. This file contains your secure Convex Cloud URL and is hidden from visitors to keep it private.
+            </p>
+            <div class="bg-gray-50 p-5 rounded-xl text-left border border-gray-100 mb-6 font-mono text-sm">
+                <p class="font-bold text-gray-700 mb-2">To get started:</p>
+                <ol class="list-decimal list-inside space-y-2 text-gray-600">
+                    <li>Copy <span class="text-indigo-600">config.example.js</span> and rename it to <span class="text-indigo-600">config.js</span> in the root directory.</li>
+                    <li>Add your Convex Cloud URL:
+                        <pre class="bg-gray-800 text-green-400 p-2 rounded mt-1 overflow-x-auto text-xs">const CONVEX_URL = "https://...";</pre>
+                    </li>
+                    <li>Reload this page!</li>
+                </ol>
+            </div>
+            <p class="text-xs text-gray-400">
+                Your <code class="bg-gray-100 px-1 py-0.5 rounded font-mono">config.js</code> is already configured in <code class="bg-gray-100 px-1 py-0.5 rounded font-mono">.gitignore</code> to keep it secure and hidden from public visitors.
+            </p>
+        </div>
+    </div>
+
+    <!-- Intro Loader -->
     <div id="intro-overlay" class="fixed inset-0 bg-indigo-600 flex flex-col justify-center items-center z-[6000] transition-opacity duration-1000 ease-in-out">
         <div id="dynamic-logo" class="text-white text-6xl sm:text-8xl font-pacifico animate-pulse">
             SnipVault
@@ -22,11 +48,11 @@
         <p id="intro-subtitle" class="text-indigo-200 text-lg sm:text-xl mt-4 opacity-0 translate-y-5">Your personal snippet sanctuary.</p>
     </div>
 
-    <div id="notification-area" class="fixed top-5 right-5 z-[5000] space-y-2">
-        </div>
+    <div id="notification-area" class="fixed top-5 right-5 z-[5000] space-y-2"></div>
 
+    <!-- AUTHENTICATION VIEW -->
     <div id="auth-view" class="hidden min-h-screen flex flex-col items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-100">
             <div class="text-center mb-8">
                 <div class="flex justify-center items-center mb-2">
                      <svg class="h-10 w-auto text-indigo-600" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -34,116 +60,171 @@
                      </svg>
                     <h1 class="text-3xl font-bold text-indigo-600 ml-2">SnipVault</h1>
                 </div>
-                <p class="text-gray-500">Sign in or create an account.</p>
+                <p class="text-gray-500 text-sm">Securely save, sync, and organize your ideas.</p>
             </div>
 
+            <!-- Login Container -->
             <div id="login-form-container">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700">Login</h3>
                 <form id="login-form" class="space-y-4">
                     <div>
-                        <label for="login-email" class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" id="login-email" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <label for="login-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <input type="email" id="login-email" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="you@example.com">
                     </div>
                     <div>
-                        <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
-                        <input type="password" id="login-password" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <div class="flex justify-between items-center mb-1">
+                            <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                            <button type="button" id="forgot-password-btn" class="text-xs text-indigo-650 hover:underline">Forgot Password?</button>
+                        </div>
+                        <input type="password" id="login-password" required class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="••••••••">
                     </div>
-                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-150">Login</button>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-150 text-sm">Login</button>
                 </form>
-                <p class="text-center mt-4 text-sm">
+                <p class="text-center mt-4 text-sm text-gray-500">
                     Don't have an account? <button id="show-signup-btn" class="text-indigo-600 hover:underline font-medium">Sign Up</button>
                 </p>
             </div>
 
+            <!-- Signup Container -->
             <div id="signup-form-container" class="hidden">
                 <h3 class="text-xl font-semibold mb-4 text-gray-700">Create Account</h3>
                 <form id="signup-form" class="space-y-4">
                     <div>
-                        <label for="signup-email" class="block text-sm font-medium text-gray-700">Email</label>
-                        <input type="email" id="signup-email" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <label for="signup-name" class="block text-sm font-medium text-gray-700">Full Name</label>
+                        <input type="text" id="signup-name" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label for="signup-dob" class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                        <input type="date" id="signup-dob" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm">
+                    </div>
+                    <div>
+                        <label for="signup-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                        <input type="email" id="signup-email" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="you@example.com">
                     </div>
                     <div>
                         <label for="signup-password" class="block text-sm font-medium text-gray-700">Password (min. 6 characters)</label>
-                        <input type="password" id="signup-password" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="password" id="signup-password" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="••••••••">
                     </div>
-                    <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-150">Sign Up</button>
+                    <div>
+                        <label for="signup-password-confirm" class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                        <input type="password" id="signup-password-confirm" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-150 text-sm">Sign Up</button>
                 </form>
-                <p class="text-center mt-4 text-sm">
+                <p class="text-center mt-4 text-sm text-gray-500">
                     Already have an account? <button id="show-login-btn" class="text-indigo-600 hover:underline font-medium">Login</button>
                 </p>
             </div>
+
+            <!-- Guest Login Area -->
+            <div class="mt-6 pt-6 border-t border-gray-100">
+                <button id="guest-login-btn" class="w-full bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold py-2.5 px-4 rounded-lg shadow-sm border border-gray-200 transition-all duration-150 flex items-center justify-center space-x-2 text-sm transform hover:scale-[1.01]">
+                    <i class="fas fa-user-secret text-gray-400"></i>
+                    <span>Continue as Guest (Local Only)</span>
+                </button>
             </div>
+        </div>
     </div>
 
+    <!-- MAIN APP CONTAINER -->
     <div id="app-container" class="container mx-auto p-4 sm:p-6 lg:p-8 max-w-4xl opacity-0 translate-y-10 hidden">
+        
+        <!-- CUSTOM ACCOUNT CONTROL BAR -->
+        <div class="flex flex-col sm:flex-row justify-between items-center bg-white p-4 rounded-xl shadow-md mb-6 border border-gray-100 max-w-md mx-auto sm:max-w-none">
+            <div class="flex items-center space-x-3 mb-3 sm:mb-0">
+                <div class="relative h-10 w-10 rounded-full bg-indigo-50 overflow-hidden border-2 border-indigo-500 flex items-center justify-center shadow-sm">
+                    <img id="header-avatar" class="hidden h-full w-full object-cover" src="" alt="Avatar">
+                    <i id="header-avatar-placeholder" class="fas fa-user text-indigo-500"></i>
+                </div>
+                <div class="text-left">
+                    <p id="user-name-display" class="font-bold text-gray-800 text-sm"></p>
+                    <p id="user-email-display" class="text-gray-500 text-xs"></p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <!-- Sync/Migrate Button for Guests -->
+                <button id="guest-sync-btn" class="hidden bg-green-500 hover:bg-green-600 text-white font-semibold py-1.5 px-3 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <span>Sync to Cloud</span>
+                </button>
+                
+                <!-- Account Panel Toggle -->
+                <button id="toggle-account-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-750 font-semibold py-1.5 px-3 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1 border border-indigo-105">
+                    <i class="fas fa-cog"></i>
+                    <span>Manage Account</span>
+                </button>
+                
+                <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-3 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- MAIN VIEW (VAULT LIST AND SAVE INPUT) -->
         <div id="main-view">
-            <header class="mb-8 text-center pt-10">
+            <header class="mb-8 text-center pt-2">
                 <div class="flex justify-center items-center mb-2">
                      <svg id="header-logo-svg" class="h-12 w-auto text-indigo-600" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                         <path fill-rule="evenodd" clip-rule="evenodd" d="M10 20C10 14.4772 14.4772 10 20 10H80C85.5228 10 90 14.4772 90 20V30H70C64.4772 30 60 34.4772 60 40V80C60 85.5228 64.4772 90 70 90H80C85.5228 90 90 85.5228 90 80V70H30C24.4772 70 20 65.5228 20 60V20H10ZM30 40H50V60H30V40Z"/>
                      </svg>
                     <h1 class="text-4xl sm:text-5xl font-bold text-indigo-600 ml-3">SnipVault</h1>
-                    
                 </div>
-                <p class="text-gray-500 text-md">Quickly save, organize, and find your thoughts, links, and code.</p>
-                <div class="flex justify-center items-center space-x-4 mt-2">
-                    <p id="user-email-display" class="text-gray-600 text-sm"></p>
-                    <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded-lg shadow text-sm transition-colors">
-                        <i class="fas fa-sign-out-alt mr-1"></i>Logout
-                    </button>
-                </div>
-                
+                <p class="text-gray-500 text-sm">Quickly save, organize, and find your thoughts, links, and code.</p>
             </header>
 
             <main>
-                <section id="input-section" class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl mb-10 transform transition-all duration-500 hover:scale-[1.01]">
+                <section id="input-section" class="bg-white p-6 sm:p-8 rounded-xl shadow-xl mb-10 transform transition-all duration-500 hover:scale-[1.005] border border-gray-100">
                     <h2 class="text-2xl font-semibold mb-6 text-gray-700 border-b pb-3">Save a New Snippet</h2>
                     <div class="space-y-5">
                         <div>
                             <label for="snippet-text" class="block text-sm font-medium text-gray-700 mb-1">Snippet Content <span class="text-red-500">*</span></label>
-                            <textarea id="snippet-text" rows="4" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" placeholder="Paste or type your snippet here..."></textarea>
+                            <textarea id="snippet-text" rows="4" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="Paste or type your snippet here..."></textarea>
                         </div>
                         <div>
                             <label for="snippet-url" class="block text-sm font-medium text-gray-700 mb-1">Source URL (Optional)</label>
-                            <input type="url" id="snippet-url" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" placeholder="https://example.com">
+                            <input type="url" id="snippet-url" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="https://example.com">
                         </div>
                         <div>
                             <label for="snippet-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                            <select id="snippet-category" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white transition-shadow"></select>
+                            <select id="snippet-category" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white text-sm"></select>
                         </div>
                         <div class="flex flex-col sm:flex-row sm:items-end space-y-4 sm:space-y-0 sm:space-x-3">
                             <div class="flex-grow">
                                 <label for="new-category-name" class="block text-sm font-medium text-gray-700 mb-1">Add New Category</label>
-                                <input type="text" id="new-category-name" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" placeholder="e.g., Project Ideas">
+                                <input type="text" id="new-category-name" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="e.g., Project Ideas">
                             </div>
-                            <button id="add-category-btn" class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-4 rounded-lg shadow-md transition-all duration-150 ease-in-out hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transform hover:scale-105">Add Category</button>
+                            <button id="add-category-btn" class="w-full sm:w-auto bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-5 rounded-lg shadow-md transition-all duration-150 ease-in-out transform hover:scale-105">Add Category</button>
                         </div>
                         <div>
                             <label for="snippet-note" class="block text-sm font-medium text-gray-700 mb-1">Note (Optional)</label>
-                            <input type="text" id="snippet-note" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" placeholder="A quick reminder or context...">
+                            <input type="text" id="snippet-note" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="A quick reminder or context...">
                         </div>
                     </div>
-                    <button id="save-snippet-btn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-150 ease-in-out transform hover:scale-105 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75">
+                    <button id="save-snippet-btn" class="mt-8 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-lg shadow-lg transition-all duration-150 transform hover:scale-[1.01] hover:shadow-xl flex items-center justify-center">
                         <i class="fas fa-save mr-2"></i>Save Snippet
                     </button>
                 </section>
 
-                <section id="output-section" class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl">
+                <section id="output-section" class="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-100">
                     <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-3">
                         <h2 class="text-2xl font-semibold text-gray-700 mb-3 sm:mb-0">My Saved Snippets</h2>
                         <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-                            <input type="text" id="search-input" placeholder="Search snippets..." class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500">
-                            <select id="filter-category" class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 bg-white">
+                            <input type="text" id="search-input" placeholder="Search snippets..." class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-indigo-500 text-sm">
+                            <select id="filter-category" class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-indigo-500 bg-white text-sm">
                                 <option value="">All Categories</option>
-                                </select>
+                            </select>
                         </div>
                     </div>
-                    <div id="snippets-list" class="space-y-6">
-                        </div>
+                    <div id="snippets-list" class="space-y-6"></div>
                 </section>
             </main>
-        </div> <div id="detail-view" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-2xl mt-10">
-            <button id="back-to-list-btn" class="mb-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow transition-colors duration-150">
+        </div> 
+
+        <!-- DETAIL/EDIT VIEW -->
+        <div id="detail-view" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-2xl mt-4 border border-gray-100">
+            <button id="back-to-list-btn" class="mb-6 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow transition-colors duration-150 text-sm">
                 <i class="fas fa-arrow-left mr-2"></i>Back to List
             </button>
             
@@ -151,26 +232,26 @@
             
             <div id="detail-content-view" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Category</label>
-                    <p id="detail-category-view" class="mt-1 text-lg text-gray-800 p-2 bg-indigo-50 rounded-md"></p>
+                    <label class="block text-xs font-semibold text-gray-400">Category</label>
+                    <p id="detail-category-view" class="mt-1 text-md text-gray-800 p-2 bg-indigo-50 rounded-md font-semibold inline-block"></p>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-500">Snippet Content</label>
-                    <div id="detail-text-view" class="mt-1 text-gray-800 p-3 border border-gray-200 rounded-md bg-gray-50 whitespace-pre-wrap min-h-[100px]"></div>
+                    <label class="block text-xs font-semibold text-gray-400">Snippet Content</label>
+                    <div id="detail-text-view" class="mt-1 text-gray-800 p-3 border border-gray-250 rounded-md bg-gray-50 whitespace-pre-wrap min-h-[100px] text-sm font-mono"></div>
                 </div>
                 <div id="detail-url-view-container" class="hidden">
-                    <label class="block text-sm font-medium text-gray-500">Source URL</label>
-                    <p class="mt-1 text-gray-800"><a id="detail-url-view" href="#" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline break-all"></a></p>
+                    <label class="block text-xs font-semibold text-gray-400">Source URL</label>
+                    <p class="mt-1 text-sm text-gray-850"><a id="detail-url-view" href="#" target="_blank" rel="noopener noreferrer" class="text-indigo-650 hover:underline break-all"></a></p>
                 </div>
                 <div id="detail-note-view-container" class="hidden">
-                    <label class="block text-sm font-medium text-gray-500">Note</label>
-                    <p id="detail-note-view" class="mt-1 text-gray-700 italic p-2 bg-gray-100 rounded-md"></p>
+                    <label class="block text-xs font-semibold text-gray-400">Note</label>
+                    <p id="detail-note-view" class="mt-1 text-gray-700 italic p-2 bg-gray-100 rounded-md text-sm"></p>
                 </div>
                  <div>
-                    <label class="block text-sm font-medium text-gray-500">Saved On</label>
-                    <p id="detail-date-view" class="mt-1 text-sm text-gray-600"></p>
+                    <label class="block text-xs font-semibold text-gray-400">Saved On</label>
+                    <p id="detail-date-view" class="mt-1 text-xs text-gray-500"></p>
                 </div>
-                <button id="edit-snippet-from-view-btn" class="mt-6 w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow transition-colors duration-150">
+                <button id="edit-snippet-from-view-btn" class="mt-6 w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-lg shadow transition-colors duration-155 text-sm">
                     <i class="fas fa-edit mr-2"></i>Edit Snippet
                 </button>
             </div>
@@ -179,32 +260,307 @@
                  <input type="hidden" id="edit-snippet-id">
                 <div>
                     <label for="edit-snippet-text" class="block text-sm font-medium text-gray-700 mb-1">Snippet Content <span class="text-red-500">*</span></label>
-                    <textarea id="edit-snippet-text" rows="6" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                    <textarea id="edit-snippet-text" rows="6" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm font-mono"></textarea>
                 </div>
                 <div>
                     <label for="edit-snippet-url" class="block text-sm font-medium text-gray-700 mb-1">Source URL</label>
-                    <input type="url" id="edit-snippet-url" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="url" id="edit-snippet-url" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
                 <div>
                     <label for="edit-snippet-category" class="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                    <select id="edit-snippet-category" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white"></select>
+                    <select id="edit-snippet-category" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 bg-white text-sm"></select>
                 </div>
                 <div>
                     <label for="edit-snippet-note" class="block text-sm font-medium text-gray-700 mb-1">Note</label>
-                    <input type="text" id="edit-snippet-note" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="edit-snippet-note" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
                 <div class="flex space-x-3 mt-6">
-                    <button id="save-edited-snippet-btn" class="w-full sm:w-auto flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-150">
+                    <button id="save-edited-snippet-btn" class="w-full sm:w-auto flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-150 text-sm">
                         <i class="fas fa-check mr-2"></i>Save Changes
                     </button>
-                    <button id="cancel-edit-snippet-btn" class="w-full sm:w-auto flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors duration-150">
+                    <button id="cancel-edit-snippet-btn" class="w-full sm:w-auto flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors text-sm">
                         <i class="fas fa-times mr-2"></i>Cancel
                     </button>
                 </div>
             </div>
-        </div> <footer class="text-center mt-12 py-6">
-            <p class="text-sm text-gray-600">&copy; <span id="current-year"></span> SnipVault. Crafted with <i class="fas fa-heart text-red-500"></i>.  Created by Rosy.</p>
+        </div> 
+
+        <!-- ACCOUNT MANAGEMENT VIEW -->
+        <div id="account-view" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-2xl border border-gray-100 mt-4">
+            <button id="back-from-account-btn" class="mb-6 bg-gray-250 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow transition-colors text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Vault
+            </button>
+            
+            <h2 class="text-3xl font-extrabold mb-8 text-indigo-600 border-b pb-4">Account Settings</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Left Column: Avatar & Basic Info -->
+                <div class="bg-gray-50 p-6 rounded-2xl border border-gray-100 text-center flex flex-col items-center">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Profile Photo</h3>
+                    
+                    <div class="relative h-32 w-32 rounded-full overflow-hidden border-4 border-indigo-600 bg-white shadow-lg flex items-center justify-center mb-4">
+                        <img id="profile-avatar-img" class="hidden h-full w-full object-cover" src="" alt="Profile picture">
+                        <i id="profile-avatar-placeholder" class="fas fa-user fa-3x text-indigo-300"></i>
+                    </div>
+
+                    <div class="space-y-3 w-full max-w-xs">
+                        <label class="block w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded-lg shadow-sm text-xs cursor-pointer transition-colors text-center">
+                            <i class="fas fa-camera mr-1.5"></i>Upload Photo
+                            <input type="file" id="avatar-input" accept="image/*" class="hidden">
+                        </label>
+                        <button id="delete-avatar-btn" class="hidden w-full bg-red-100 hover:bg-red-200 text-red-650 font-bold py-2 px-3 rounded-lg text-xs transition-colors">
+                            <i class="fas fa-trash-alt mr-1.5"></i>Delete Photo
+                        </button>
+                    </div>
+
+                    <!-- Cropper Zoom Controls -->
+                    <div id="crop-controls" class="hidden w-full max-w-xs mt-4 p-3 bg-white rounded-lg border border-gray-200 space-y-2 text-xs">
+                        <p class="font-semibold text-gray-650">Adjust & Fit Photo:</p>
+                        <input type="range" id="crop-zoom" min="0.5" max="3" step="0.05" value="1" class="w-full h-1.5 bg-indigo-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                        <div class="flex space-x-2 mt-2">
+                            <button id="save-crop-btn" class="flex-1 bg-green-500 hover:bg-green-650 text-white py-1 px-2 rounded font-bold">Apply</button>
+                            <button id="cancel-crop-btn" class="bg-gray-250 hover:bg-gray-300 text-gray-700 py-1 px-2 rounded font-semibold">Cancel</button>
+                        </div>
+                        <canvas id="crop-canvas" class="hidden"></canvas>
+                    </div>
+
+                    <!-- User Basic Info -->
+                    <div class="w-full border-t border-gray-200 mt-6 pt-6 text-left space-y-3 text-sm">
+                        <div>
+                            <span class="block text-xs font-semibold text-gray-400">Account Name</span>
+                            <span id="profile-name-view" class="font-bold text-gray-800"></span>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-semibold text-gray-400">Email Address</span>
+                            <div class="flex items-center space-x-1.5 flex-wrap">
+                                <span id="profile-email-view" class="font-bold text-gray-800 break-all"></span>
+                                <span id="verification-badge-verified" class="hidden bg-green-100 text-green-700 text-[10px] font-bold px-1.5 py-0.5 rounded-full"><i class="fas fa-check-circle mr-0.5"></i>Verified</span>
+                                <button id="verify-email-btn" class="hidden bg-yellow-100 hover:bg-yellow-200 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full transition-colors flex items-center"><i class="fas fa-exclamation-circle mr-0.5"></i>Verify</button>
+                            </div>
+                        </div>
+                        <div>
+                            <span class="block text-xs font-semibold text-gray-400">DOB & Calculated Age</span>
+                            <span id="profile-dob-view" class="font-semibold text-gray-750"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Settings, Active Sessions and Safety Actions -->
+                <div class="md:col-span-2 space-y-6">
+                    <!-- Reset Password Container -->
+                    <div id="password-reset-tab" class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                        <h3 class="text-xl font-bold text-gray-800 border-b pb-2 flex items-center"><i class="fas fa-shield-alt text-indigo-500 mr-2"></i>Change Password</h3>
+                        <form id="change-password-form" class="space-y-4 text-sm">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label for="change-old-password" class="block font-medium text-gray-600 mb-1">Current Password</label>
+                                    <input type="password" id="change-old-password" required class="w-full p-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+                                </div>
+                                <div class="hidden sm:block"></div>
+                                <div>
+                                    <label for="change-new-password" class="block font-medium text-gray-600 mb-1">New Password (min. 6 chars)</label>
+                                    <input type="password" id="change-new-password" required class="w-full p-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+                                </div>
+                                <div>
+                                    <label for="change-new-confirm" class="block font-medium text-gray-600 mb-1">Confirm New Password</label>
+                                    <input type="password" id="change-new-confirm" required class="w-full p-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+                                </div>
+                            </div>
+                            <button type="submit" class="bg-indigo-650 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-lg transition-colors shadow">
+                                Change Password
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Active Sessions Manager -->
+                    <div class="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center border-b pb-2 gap-2">
+                            <h3 class="text-xl font-bold text-gray-800 flex items-center"><i class="fas fa-history text-indigo-500 mr-2"></i>Active Sessions Log</h3>
+                            <button id="revoke-all-others-btn" class="bg-red-50 hover:bg-red-100 text-red-650 border border-red-200 text-xs font-bold py-1.5 px-2.5 rounded-lg transition-colors w-max">
+                                Logout All Other Devices
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-xs text-left">
+                                <thead class="bg-gray-50 text-gray-500 font-semibold uppercase">
+                                    <tr>
+                                        <th class="p-3">Device / Browser</th>
+                                        <th class="p-3">Location</th>
+                                        <th class="p-3">Logged In</th>
+                                        <th class="p-3 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="active-sessions-table" class="divide-y divide-gray-100 text-gray-600">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- GDPR Data Export and Account Deletion Trigger buttons -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <!-- GDPR compliance export -->
+                        <div class="bg-indigo-50 p-6 rounded-2xl border border-indigo-100 space-y-4">
+                            <h4 class="text-md font-bold text-indigo-850 flex items-center"><i class="fas fa-file-export text-indigo-500 mr-2"></i>GDPR Compliance Export</h4>
+                            <p class="text-xs text-indigo-800 leading-relaxed">
+                                Under GDPR regulations, download a complete backup export containing all categories, profile info, and saved snippets instantly as a JSON file.
+                            </p>
+                            <button id="download-data-btn" class="w-full bg-indigo-600 hover:bg-indigo-750 text-white font-bold py-2.5 px-4 rounded-lg shadow transition-colors text-xs">
+                                <i class="fas fa-download mr-1.5"></i>Download Data (JSON)
+                            </button>
+                        </div>
+
+                        <!-- Danger Zone -->
+                        <div class="bg-red-50 p-6 rounded-2xl border border-red-150 space-y-4">
+                            <h4 class="text-md font-bold text-red-850 flex items-center"><i class="fas fa-skull-crossbones text-red-650 mr-2"></i>Delete Profile</h4>
+                            <p class="text-xs text-red-800 leading-relaxed">
+                                Permanently wipe your user profile, custom categories, saved snippets, and all active login sessions from Convex cloud servers. Irreversible.
+                            </p>
+                            <button id="delete-account-trigger-btn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg shadow transition-colors text-xs">
+                                <i class="fas fa-trash-alt mr-1.5"></i>Delete My Account
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="text-center mt-12 py-6">
+            <p class="text-sm text-gray-600">&copy; <span id="current-year"></span> SnipVault. Crafted with <i class="fas fa-heart text-red-500"></i>. Created by Rosy.</p>
         </footer>
+    </div>
+
+    <!-- GUEST ZERO-SYNC WARNING MODAL -->
+    <div id="guest-warning-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex justify-center items-center p-4 z-[8000] transition-opacity duration-300">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border-t-8 border-yellow-500 transform transition-all duration-300 scale-95 opacity-0" id="guest-warning-modal-content">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="flex-shrink-0 h-12 w-12 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle fa-lg"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Guest Mode Warning</h3>
+            </div>
+            <p class="text-gray-600 text-sm leading-relaxed mb-5">
+                You are about to enter **Guest Mode**. 
+                <span class="block mt-2 font-semibold text-yellow-700">⚠️ Important Notice:</span>
+                Your snippets and categories will be stored **only on this device (locally)** and **will NOT sync** to other devices. If you clear your browser history or change browsers, your data will be permanently deleted.
+            </p>
+            <div class="flex space-x-3">
+                <button id="confirm-guest-btn" class="flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors text-sm transform hover:scale-[1.02]">
+                    I Understand, Continue
+                </button>
+                <button id="cancel-guest-btn" class="flex-grow-0 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors text-sm">
+                    Go Back
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MIGRATION & COLLISION MERGE MODAL -->
+    <div id="migration-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-65 backdrop-blur-sm flex justify-center items-center p-4 z-[8000] transition-opacity duration-300">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-lg w-full border-t-8 border-green-500 transform transition-all duration-300 scale-95 opacity-0 overflow-y-auto max-h-[90vh]" id="migration-modal-content">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="flex-shrink-0 h-12 w-12 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
+                    <i class="fas fa-cloud-upload-alt fa-lg"></i>
+                </div>
+                <h3 class="text-2xl font-bold text-gray-800">Sync Local Data to Cloud</h3>
+            </div>
+            
+            <p class="text-gray-600 text-sm leading-relaxed mb-4">
+                Create a new cloud account or merge your local guest snippets and categories with an existing profile.
+            </p>
+
+            <form id="migration-form" class="space-y-4 text-sm">
+                <div>
+                    <label for="migrate-email" class="block text-xs font-semibold text-gray-400">Account Email</label>
+                    <input type="email" id="migrate-email" required class="mt-1 w-full p-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="email@example.com">
+                </div>
+
+                <!-- Collision Alert Panel -->
+                <div id="migration-conflict-panel" class="hidden bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded-md space-y-2 text-xs">
+                    <h4 class="font-bold text-yellow-800 flex items-center"><i class="fas fa-exclamation-triangle mr-1.5"></i> Existing Account Found: Merging Details</h4>
+                    <p class="text-yellow-700">A SnipVault account already exists for this email. We will securely merge your guest data. Please review conflicts:</p>
+                    <div id="migration-conflict-details" class="max-h-32 overflow-y-auto space-y-1 font-mono text-gray-600 mt-1 bg-white p-2 rounded border border-yellow-150">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+
+                <!-- Signup fields for fresh email registration -->
+                <div id="migrate-new-fields" class="space-y-4">
+                    <div>
+                        <label for="migrate-name" class="block text-xs font-semibold text-gray-400">Full Name</label>
+                        <input type="text" id="migrate-name" class="w-full p-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="John Doe">
+                    </div>
+                    <div>
+                        <label for="migrate-dob" class="block text-xs font-semibold text-gray-400">Date of Birth</label>
+                        <input type="date" id="migrate-dob" class="w-full p-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="migrate-password" id="migrate-password-label" class="block text-xs font-semibold text-gray-400">Password (min. 6 characters)</label>
+                    <input type="password" id="migrate-password" required class="w-full p-2.5 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500" placeholder="••••••••">
+                </div>
+
+                <div class="flex space-x-3 pt-3">
+                    <button type="submit" id="migrate-submit-btn" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors text-sm">
+                        Create Account & Sync
+                    </button>
+                    <button type="button" id="close-migrate-btn" class="bg-gray-250 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- SIMULATED FORGOT PASSWORD MODAL -->
+    <div id="forgot-password-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex justify-center items-center p-4 z-[8000] transition-opacity duration-300">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border-t-8 border-indigo-500 transform transition-all duration-300 scale-95 opacity-0" id="forgot-password-modal-content">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="flex-shrink-0 h-12 w-12 rounded-full bg-indigo-100 text-indigo-650 flex items-center justify-center">
+                    <i class="fas fa-key fa-lg"></i>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800">Reset Password</h3>
+            </div>
+            <p class="text-gray-600 text-sm mb-4 leading-relaxed">
+                Enter your registered email address. We will simulate sending a password reset verification link to your inbox.
+            </p>
+            <form id="forgot-password-form" class="space-y-4 text-sm">
+                <div>
+                    <label for="forgot-email" class="block text-xs font-semibold text-gray-400">Email Address</label>
+                    <input type="email" id="forgot-email" required class="mt-1 w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" placeholder="you@example.com">
+                </div>
+                <div class="flex space-x-3">
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-755 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors">
+                        Send Reset Link
+                    </button>
+                    <button type="button" id="close-forgot-btn" class="bg-gray-255 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ACCOUNT DELETION CONFIRM COUNTDOWN MODAL -->
+    <div id="delete-warning-modal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm flex justify-center items-center p-4 z-[9000] transition-opacity duration-300">
+        <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-2xl max-w-md w-full border-t-8 border-red-600 transform transition-all duration-300 scale-95 opacity-0 text-center" id="delete-warning-modal-content">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 text-red-650 mb-4">
+                <i class="fas fa-exclamation-triangle fa-2x"></i>
+            </div>
+            <h3 class="text-2xl font-extrabold text-gray-805 mb-3">Delete Account?</h3>
+            <p class="text-gray-600 text-sm leading-relaxed mb-6">
+                This action is permanent and completely deletes all of your **snippets, custom categories, active session tokens, and profile data** from Convex database servers. We cannot restore this data!
+            </p>
+            <div class="space-y-3">
+                <button id="confirm-delete-account-btn" disabled class="w-full bg-red-400 text-white font-bold py-3 px-4 rounded-lg shadow text-sm cursor-not-allowed transition-colors duration-150">
+                    Hold on... (5s)
+                </button>
+                <button id="cancel-delete-account-btn" class="w-full bg-gray-250 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors text-sm">
+                    Cancel, Keep Profile
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="script.js"></script>

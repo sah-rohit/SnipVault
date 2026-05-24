@@ -1,0 +1,7 @@
+node_modules/
+config.js
+.env
+.env.local
+.convex/
+package-lock.json
+.tmp/
