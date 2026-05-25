@@ -82,7 +82,7 @@
 
                 <div class="flex items-center justify-between border-t pt-3 gap-2">
                     <span id="auth-policy-timer-text" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Countdown starting...</span>
-                    <button id="auth-policy-agree-btn" disabled class="bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg shadow text-xs cursor-not-allowed transition-all duration-300">
+                    <button id="auth-policy-agree-btn" disabled class="bg-gray-100 border border-gray-300 text-gray-400 font-semibold py-2 px-4 rounded shadow-sm text-xs cursor-not-allowed transition-all duration-300">
                         Agree (5s)
                     </button>
                 </div>
@@ -112,8 +112,8 @@
                         </div>
                         <input type="password" id="login-password" required class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="••••••••">
                     </div>
-                    <button type="submit" class="w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-850 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-indigo-150/50 transition-all duration-300 text-sm transform hover:scale-[1.015] flex items-center justify-center space-x-2">
-                        <i class="fas fa-sign-in-alt"></i>
+                    <button type="submit" id="login-submit-btn" class="w-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-700 font-bold py-3 px-6 rounded shadow-sm transition-all duration-300 text-sm transform hover:scale-[1.01] flex items-center justify-center space-x-2">
+                        <i class="fas fa-sign-in-alt text-indigo-500"></i>
                         <span>Secure Log In</span>
                     </button>
                 </form>
@@ -157,8 +157,8 @@
                             <span class="block text-[10px] text-gray-400 mt-0.5">(Please click and read both completely to unlock checkbox)</span>
                         </span>
                     </div>
-                    <button type="submit" id="signup-submit-btn" disabled class="w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-lg shadow cursor-not-allowed transition-all duration-300 text-sm flex items-center justify-center space-x-2 mt-2">
-                        <i class="fas fa-user-plus"></i>
+                    <button type="submit" id="signup-submit-btn" disabled class="w-full bg-gray-55 border border-gray-200 text-gray-400 font-bold py-3 px-6 rounded-lg shadow-sm cursor-not-allowed transition-all duration-300 text-sm flex items-center justify-center space-x-2 mt-2">
+                        <i class="fas fa-user-plus text-gray-300"></i>
                         <span>Create Account</span>
                     </button>
                 </form>
@@ -169,8 +169,8 @@
 
             <!-- Guest Login Area -->
             <div class="mt-6 pt-6 border-t border-gray-100">
-                <button id="guest-login-btn" class="w-full bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold py-2.5 px-4 rounded-lg shadow-sm border border-gray-200 transition-all duration-150 flex items-center justify-center space-x-2 text-sm transform hover:scale-[1.01]">
-                    <i class="fas fa-user-secret text-gray-400"></i>
+                <button id="guest-login-btn" class="w-full bg-indigo-50/30 hover:bg-indigo-50 text-indigo-750 font-semibold py-2.5 px-4 rounded-lg shadow-sm border border-indigo-100/70 transition-all duration-150 flex items-center justify-center space-x-2 text-sm transform hover:scale-[1.01]">
+                    <i class="fas fa-user-secret text-indigo-500"></i>
                     <span>Continue as Guest (Local Only)</span>
                 </button>
             </div>
@@ -523,7 +523,7 @@
 
                 <div class="flex items-center justify-between border-t pt-3 gap-2">
                     <span id="guest-policy-timer-text" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Countdown starting...</span>
-                    <button id="guest-policy-agree-btn" disabled class="bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg shadow text-xs cursor-not-allowed transition-all duration-300">
+                    <button id="guest-policy-agree-btn" disabled class="bg-gray-100 border border-gray-300 text-gray-400 font-semibold py-2 px-4 rounded shadow-sm text-xs cursor-not-allowed transition-all duration-300">
                         Agree (5s)
                     </button>
                 </div>
@@ -551,7 +551,7 @@
                 </span>
             </div>
             <div class="flex space-x-3">
-                <button id="confirm-guest-btn" disabled class="flex-1 bg-gray-300 text-gray-500 font-bold py-3 px-4 rounded-lg shadow cursor-not-allowed transition-colors text-sm">
+                <button id="confirm-guest-btn" disabled class="flex-1 bg-gray-55 border border-gray-200 text-gray-400 font-bold py-3 px-4 rounded-lg shadow-sm cursor-not-allowed transition-colors text-sm">
                     I Understand, Continue
                 </button>
                 <button id="cancel-guest-btn" class="flex-grow-0 bg-gray-200 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors text-sm">
@@ -579,7 +579,7 @@
 
                 <div class="flex items-center justify-between border-t pt-3 gap-2">
                     <span id="migrate-policy-timer-text" class="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">Countdown starting...</span>
-                    <button id="migrate-policy-agree-btn" disabled class="bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg shadow text-xs cursor-not-allowed transition-all duration-300">
+                    <button id="migrate-policy-agree-btn" disabled class="bg-gray-100 border border-gray-300 text-gray-400 font-semibold py-2 px-4 rounded shadow-sm text-xs cursor-not-allowed transition-all duration-300">
                         Agree (5s)
                     </button>
                 </div>
@@ -639,7 +639,7 @@
                     </span>
                 </div>
                 <div class="flex space-x-3 pt-4">
-                    <button type="submit" id="migrate-submit-btn" disabled class="flex-1 bg-gray-300 text-gray-500 font-bold py-3 px-4 rounded-lg shadow cursor-not-allowed transition-colors text-sm">
+                    <button type="submit" id="migrate-submit-btn" disabled class="flex-1 bg-gray-55 border border-gray-200 text-gray-400 font-bold py-3 px-4 rounded-lg shadow-sm cursor-not-allowed transition-colors text-sm">
                         Create Account & Sync
                     </button>
                     <button type="button" id="close-migrate-btn" class="bg-gray-250 hover:bg-gray-300 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors text-sm">

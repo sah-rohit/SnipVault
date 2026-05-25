@@ -270,6 +270,25 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   outline: none !important;
 }
 
+/* Custom utility class fallbacks for non-standard colors */
+.text-indigo-750 {
+  color: #312e81 !important;
+}
+.border-indigo-105 {
+  border-color: #c7d2fe !important;
+}
+
+/* Disabled button global styling */
+button:disabled, button[disabled] {
+  cursor: not-allowed !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 0.6 !important;
+  background-color: #f1f5f9 !important;
+  color: #94a3b8 !important;
+  border: 2px solid #cbd5e1 !important;
+}
+
 /* Sharp, solid border & flat shadow layout for ALL action buttons */
 #save-snippet-btn, #add-category-btn, #logout-btn, #toggle-account-btn, 
 #guest-login-btn, #confirm-guest-btn, #cancel-guest-btn, 
@@ -278,7 +297,9 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
 .action-btn, #back-to-list-btn, #edit-snippet-from-view-btn, 
 #save-edited-snippet-btn, #cancel-edit-snippet-btn, #back-from-account-btn,
 #save-crop-btn, #cancel-crop-btn, #revoke-all-others-btn,
-.dev-btn {
+.dev-btn,
+#auth-policy-agree-btn, #guest-policy-agree-btn, #migrate-policy-agree-btn,
+#login-submit-btn, #signup-submit-btn {
   border: 2px solid #1f2937 !important;
   box-shadow: 3px 3px 0px 0px #1f2937 !important;
   font-family: monospace;
@@ -289,20 +310,24 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   transition: all 0.1s ease !important;
 }
 
-#save-snippet-btn:hover, #add-category-btn:hover, #migrate-submit-btn:hover, 
-#confirm-guest-btn:hover, #download-data-btn:hover, 
-.action-btn:hover, #back-to-list-btn:hover, #edit-snippet-from-view-btn:hover, 
-#save-edited-snippet-btn:hover, #back-from-account-btn:hover,
-.dev-btn:hover {
+#save-snippet-btn:hover:not(:disabled), #add-category-btn:hover:not(:disabled), #migrate-submit-btn:hover:not(:disabled), 
+#confirm-guest-btn:hover:not(:disabled), #download-data-btn:hover:not(:disabled), 
+.action-btn:hover:not(:disabled), #back-to-list-btn:hover:not(:disabled), #edit-snippet-from-view-btn:hover:not(:disabled), 
+#save-edited-snippet-btn:hover:not(:disabled), #back-from-account-btn:hover:not(:disabled),
+.dev-btn:hover:not(:disabled),
+#auth-policy-agree-btn:hover:not(:disabled), #guest-policy-agree-btn:hover:not(:disabled), #migrate-policy-agree-btn:hover:not(:disabled),
+#login-submit-btn:hover:not(:disabled), #signup-submit-btn:hover:not(:disabled) {
   transform: translate(-1px, -1px) !important;
   box-shadow: 4px 4px 0px 0px #1f2937 !important;
 }
 
-#save-snippet-btn:active, #add-category-btn:active, #migrate-submit-btn:active, 
-#confirm-guest-btn:active, #download-data-btn:active, 
-.action-btn:active, #back-to-list-btn:active, #edit-snippet-from-view-btn:active, 
-#save-edited-snippet-btn:active, #back-from-account-btn:active,
-.dev-btn:active {
+#save-snippet-btn:active:not(:disabled), #add-category-btn:active:not(:disabled), #migrate-submit-btn:active:not(:disabled), 
+#confirm-guest-btn:active:not(:disabled), #download-data-btn:active:not(:disabled), 
+.action-btn:active:not(:disabled), #back-to-list-btn:active:not(:disabled), #edit-snippet-from-view-btn:active:not(:disabled), 
+#save-edited-snippet-btn:active:not(:disabled), #back-from-account-btn:active:not(:disabled),
+.dev-btn:active:not(:disabled),
+#auth-policy-agree-btn:active:not(:disabled), #guest-policy-agree-btn:active:not(:disabled), #migrate-policy-agree-btn:active:not(:disabled),
+#login-submit-btn:active:not(:disabled), #signup-submit-btn:active:not(:disabled) {
   transform: translate(1px, 1px) !important;
   box-shadow: 1px 1px 0px 0px #1f2937 !important;
 }
@@ -312,7 +337,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   background-color: #fee2e2 !important;
   color: #991b1b !important;
 }
-#logout-btn:hover, #delete-account-trigger-btn:hover, .delete-btn:hover {
+#logout-btn:hover:not(:disabled), #delete-account-trigger-btn:hover:not(:disabled), .delete-btn:hover:not(:disabled) {
   background-color: #fca5a5 !important;
 }
 
@@ -321,7 +346,7 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   background-color: #dcfce7 !important;
   color: #166534 !important;
 }
-#add-category-btn:hover, #confirm-guest-btn:hover, #migrate-submit-btn:hover, #save-crop-btn:hover {
+#add-category-btn:hover:not(:disabled), #confirm-guest-btn:hover:not(:disabled), #migrate-submit-btn:hover:not(:disabled), #save-crop-btn:hover:not(:disabled) {
   background-color: #bbf7d0 !important;
 }
 
@@ -330,8 +355,17 @@ input[type="text"]:focus, input[type="email"]:focus, input[type="password"]:focu
   background-color: #fef3c7 !important;
   color: #92400e !important;
 }
-.edit-btn:hover, #edit-snippet-from-view-btn:hover {
+.edit-btn:hover:not(:disabled), #edit-snippet-from-view-btn:hover:not(:disabled) {
   background-color: #fde68a !important;
+}
+
+/* Indigo-hued agreement / account buttons override */
+#auth-policy-agree-btn, #guest-policy-agree-btn, #migrate-policy-agree-btn, #toggle-account-btn, #login-submit-btn, #signup-submit-btn {
+  background-color: #e0e7ff !important;
+  color: #1e1b4b !important;
+}
+#auth-policy-agree-btn:hover:not(:disabled), #guest-policy-agree-btn:hover:not(:disabled), #migrate-policy-agree-btn:hover:not(:disabled), #toggle-account-btn:hover:not(:disabled), #login-submit-btn:hover:not(:disabled), #signup-submit-btn:hover:not(:disabled) {
+  background-color: #c7d2fe !important;
 }
 
 /* Dev notifications */

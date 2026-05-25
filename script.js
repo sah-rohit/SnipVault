@@ -2381,11 +2381,11 @@ const migrateNameEl = document.getElementById('migrate-name');
             submitBtn.disabled = false;
             submitBtn.classList.remove("bg-gray-300", "text-gray-500", "cursor-not-allowed");
             if (type === 'signup') {
-                submitBtn.className = "w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-green-150/50 transition-all duration-305 text-sm flex items-center justify-center space-x-2 mt-2 transform hover:scale-[1.015]";
+                submitBtn.className = "w-full bg-indigo-100 hover:bg-indigo-200 border border-indigo-350 text-indigo-850 font-bold py-3 px-6 rounded shadow-sm transition-all duration-305 text-sm flex items-center justify-center space-x-2 mt-2 transform hover:scale-[1.015]";
             } else if (type === 'guest') {
-                submitBtn.className = "flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors text-sm transform hover:scale-[1.02]";
+                submitBtn.className = "flex-1 bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-yellow-800 font-bold py-3 px-4 rounded shadow-sm transition-colors text-sm transform hover:scale-[1.02]";
             } else if (type === 'migrate') {
-                submitBtn.className = "flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors text-sm transform hover:scale-[1.02]";
+                submitBtn.className = "flex-1 bg-green-50 hover:bg-green-100 border border-green-150 text-green-700 font-bold py-3 px-4 rounded shadow-sm transition-colors text-sm transform hover:scale-[1.02]";
             }
         } else {
             checkbox.disabled = true;
@@ -2394,9 +2394,9 @@ const migrateNameEl = document.getElementById('migrate-name');
             
             // Lock action submit button
             submitBtn.disabled = true;
-            submitBtn.className = "w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-lg shadow cursor-not-allowed transition-all duration-300 text-sm flex items-center justify-center space-x-2 mt-2";
+            submitBtn.className = "w-full bg-gray-100 border border-gray-300 text-gray-400 font-bold py-3 px-6 rounded shadow-sm cursor-not-allowed transition-all duration-300 text-sm flex items-center justify-center space-x-2 mt-2";
             if (type === 'guest' || type === 'migrate') {
-                submitBtn.className = "flex-1 bg-gray-300 text-gray-500 font-bold py-3 px-4 rounded-lg shadow cursor-not-allowed transition-colors text-sm";
+                submitBtn.className = "flex-1 bg-gray-100 border border-gray-300 text-gray-400 font-bold py-3 px-4 rounded shadow-sm cursor-not-allowed transition-colors text-sm";
             }
         }
     }
@@ -2426,7 +2426,7 @@ const migrateNameEl = document.getElementById('migrate-name');
 
         let count = 5;
         agreeBtn.disabled = true;
-        agreeBtn.className = "bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg shadow text-xs cursor-not-allowed transition-all duration-300";
+        agreeBtn.className = "bg-gray-100 border border-gray-300 text-gray-400 font-semibold py-2 px-4 rounded shadow-sm text-xs cursor-not-allowed transition-all duration-300";
         agreeBtn.textContent = `Agree (5s)`;
         timerTextEl.textContent = "Please read completely.";
         timerTextEl.className = "text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded animate-pulse";
@@ -2439,7 +2439,7 @@ const migrateNameEl = document.getElementById('migrate-name');
             } else {
                 clearInterval(readingCountdownTimer);
                 agreeBtn.disabled = false;
-                agreeBtn.className = "bg-indigo-650 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-all duration-150 transform hover:scale-[1.02] text-xs cursor-pointer";
+                agreeBtn.className = "bg-indigo-100 hover:bg-indigo-200 border border-indigo-300 text-indigo-800 font-bold py-2 px-4 rounded shadow-sm transition-all duration-150 transform hover:scale-[1.02] text-xs cursor-pointer";
                 agreeBtn.textContent = "I Agree and Accept";
                 timerTextEl.textContent = "You can now agree.";
                 timerTextEl.className = "text-[10px] font-bold text-green-700 bg-green-50 px-2 py-1 rounded";
