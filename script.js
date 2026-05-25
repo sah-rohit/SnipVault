@@ -348,12 +348,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const migrateConflictPanel = document.getElementById('migration-conflict-panel');
     const migrateConflictDetails = document.getElementById('migration-conflict-details');
     const migrateNewFields = document.getElementById('migrate-new-fields');
-    const migrateNameEl = document.getElementById('migrate-name');
+const migrateNameEl = document.getElementById('migrate-name');
     const migrateDobEl = document.getElementById('migrate-dob');
     const migratePasswordEl = document.getElementById('migrate-password');
     const migratePasswordLabel = document.getElementById('migrate-password-label');
     const migrateSubmitBtn = document.getElementById('migrate-submit-btn');
     const closeMigrateBtn = document.getElementById('close-migrate-btn');
+    
+    // Real Password Reset Elements
+    const realResetPasswordModal = document.getElementById('real-reset-password-modal');
+    const realResetPasswordModalContent = document.getElementById('real-reset-password-modal-content');
+    const realResetPasswordForm = document.getElementById('real-reset-password-form');
+    const realResetTokenEl = document.getElementById('real-reset-token');
+    const realResetNewPasswordEl = document.getElementById('real-reset-new-password');
+    const realResetConfirmPasswordEl = document.getElementById('real-reset-confirm-password');
+    const closeRealResetBtn = document.getElementById('close-real-reset-btn');
+
     let currentEditingSnippetId = null;
     let localSnippetsCache = []; 
     let localCategoriesCache = []; 
@@ -593,6 +603,50 @@ document.addEventListener('DOMContentLoaded', () => {
         loadSessionsLog();
     }
 
+    // --- Query Parameter Router for Reset/Verify Links ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const resetToken = urlParams.get('resetToken');
+    const verifyToken = urlParams.get('verifyToken');
+
+    if (verifyToken) {
+        showNotification("Verifying email address...", "info");
+        convexClient.mutation("auth:verifyEmailWithToken", { token: verifyToken })
+            .then(() => {
+                showNotification("Email successfully verified! Active badge enabled.", "success", 5000);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            })
+            .catch(err => {
+                showNotification(`Verification failed: ${err.message}`, "error", 5000);
+            });
+    }
+
+    if (resetToken) {
+        showNotification("Verifying modification link...", "info");
+        convexClient.query("auth:checkResetToken", { token: resetToken })
+            .then(res => {
+                if (res) {
+                    const masterTargetEmailEl = document.getElementById("master-target-email");
+                    if (masterTargetEmailEl) masterTargetEmailEl.textContent = res.email;
+                    
+                    if (realResetPasswordModal && realResetPasswordModalContent && realResetTokenEl) {
+                        realResetTokenEl.value = resetToken;
+                        realResetPasswordModal.classList.remove("hidden");
+                        setTimeout(() => {
+                            realResetPasswordModalContent.classList.remove("scale-95", "opacity-0");
+                            realResetPasswordModalContent.classList.add("scale-100", "opacity-100");
+                        }, 100);
+                    }
+                } else {
+                    showNotification("Invalid, expired, or spent modification link.", "error", 6000);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            })
+            .catch(err => {
+                console.error("Token verify error:", err);
+                showNotification("Could not verify reset token link.", "error");
+                window.history.replaceState({}, document.title, window.location.pathname);
+            });
+    }
 
     // --- Session Setup / Initialization ---
     if (localStorage.getItem("snipvault_guest_mode") === "true") {
@@ -756,15 +810,206 @@ document.addEventListener('DOMContentLoaded', () => {
     if (forgotPasswordForm) {
         forgotPasswordForm.addEventListener("submit", (e) => {
             e.preventDefault();
-            const email = forgotEmailEl.value;
-            showNotification(`Simulating reset email: link successfully dispatched to ${email}!`, "success", 5000);
+            const email = forgotEmailEl.value.trim();
+            const baseUrl = window.location.origin + window.location.pathname;
             
-            forgotPasswordModalContent.classList.remove("scale-100", "opacity-100");
-            forgotPasswordModalContent.classList.add("scale-95", "opacity-0");
-            setTimeout(() => {
-                forgotPasswordModal.classList.add("hidden");
-                forgotEmailEl.value = '';
-            }, 300);
+            showNotification("Sending secure password reset email...", "info");
+            
+            convexClient.mutation("auth:requestPasswordReset", {
+                email,
+                baseUrl
+            })
+            .then(() => {
+                showNotification(`Password reset link successfully sent to ${email}! (Please check your Spam or Junk folder if not found in your Inbox)`, "success", 7500);
+                
+                forgotPasswordModalContent.classList.remove("scale-100", "opacity-100");
+                forgotPasswordModalContent.classList.add("scale-95", "opacity-0");
+                setTimeout(() => {
+                    forgotPasswordModal.classList.add("hidden");
+                    forgotEmailEl.value = '';
+                }, 300);
+            })
+            .catch(error => {
+                console.error("Password reset error:", error);
+                showNotification(`Failed to request password reset: ${error.message}`, "error", 5000);
+            });
+        });
+    }
+
+    // --- Logged-In "Don't remember password" Helper Trigger ---
+    const sendChangePasswordLinkBtn = document.getElementById("send-change-password-link-btn");
+    if (sendChangePasswordLinkBtn) {
+        sendChangePasswordLinkBtn.addEventListener("click", () => {
+            if (!currentUser || !currentUser.email) {
+                showNotification("Error: User email not found.", "error");
+                return;
+            }
+            const baseUrl = window.location.origin + window.location.pathname;
+            showNotification("Sending secure password reset email...", "info");
+            convexClient.mutation("auth:requestPasswordReset", {
+                email: currentUser.email,
+                baseUrl
+            })
+            .then(() => {
+                showNotification(`A secure reset link has been successfully sent to: ${currentUser.email}! (Please check your Spam or Junk folder if it does not arrive in your Inbox)`, "success", 7500);
+            })
+            .catch(err => {
+                console.error("Failed to request reset link:", err);
+                showNotification(`Request failed: ${err.message}`, "error", 5000);
+            });
+        });
+    }
+
+    // --- Master Account Modification Panel (Admin Panel) Logic ---
+    const tabMasterPasswordBtn = document.getElementById("tab-master-password-btn");
+    const tabMasterEmailBtn = document.getElementById("tab-master-email-btn");
+    const masterPasswordForm = document.getElementById("real-reset-password-form");
+    const masterEmailForm = document.getElementById("real-reset-email-form");
+    const masterEmailNewInput = document.getElementById("real-reset-new-email");
+    const masterCollisionPanel = document.getElementById("master-email-collision-panel");
+    const confirmMasterMergeBtn = document.getElementById("confirm-master-email-merge-btn");
+    const masterEmailActionButtons = document.getElementById("master-email-action-buttons");
+
+    // Cancel / Close buttons listener
+    document.querySelectorAll(".close-master-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+            if (realResetPasswordModal && realResetPasswordModalContent) {
+                realResetPasswordModalContent.classList.remove("scale-100", "opacity-100");
+                realResetPasswordModalContent.classList.add("scale-95", "opacity-0");
+                setTimeout(() => {
+                    realResetPasswordModal.classList.add("hidden");
+                    // Clear forms
+                    if (masterPasswordForm) masterPasswordForm.reset();
+                    if (masterEmailForm) masterEmailForm.reset();
+                    if (masterCollisionPanel) masterCollisionPanel.classList.add("hidden");
+                    if (masterEmailActionButtons) masterEmailActionButtons.classList.remove("hidden");
+                    // Clear URL parameters
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 300);
+            }
+        });
+    });
+
+    // Tab switches
+    if (tabMasterPasswordBtn && tabMasterEmailBtn && masterPasswordForm && masterEmailForm) {
+        tabMasterPasswordBtn.addEventListener("click", () => {
+            tabMasterPasswordBtn.className = "flex-1 pb-2 border-b-2 border-indigo-600 text-indigo-600";
+            tabMasterEmailBtn.className = "flex-1 pb-2 border-b-2 border-transparent text-gray-400 hover:text-gray-600";
+            masterPasswordForm.classList.remove("hidden");
+            masterEmailForm.classList.add("hidden");
+        });
+
+        tabMasterEmailBtn.addEventListener("click", () => {
+            tabMasterEmailBtn.className = "flex-1 pb-2 border-b-2 border-indigo-600 text-indigo-600";
+            tabMasterPasswordBtn.className = "flex-1 pb-2 border-b-2 border-transparent text-gray-400 hover:text-gray-600";
+            masterEmailForm.classList.remove("hidden");
+            masterPasswordForm.classList.add("hidden");
+        });
+    }
+
+    // Submit: Master Update Password Form
+    if (masterPasswordForm && realResetPasswordModal && realResetPasswordModalContent) {
+        masterPasswordForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const token = realResetTokenEl.value;
+            const newPassword = realResetNewPasswordEl.value;
+            const confirmPass = realResetConfirmPasswordEl.value;
+
+            if (newPassword.length < 6) {
+                showNotification("Password must be at least 6 characters.", "error");
+                return;
+            }
+
+            if (newPassword !== confirmPass) {
+                showNotification("Passwords do not match.", "error");
+                return;
+            }
+
+            showNotification("Saving new password...", "info");
+
+            convexClient.mutation("auth:resetPasswordWithToken", {
+                token,
+                newPassword
+            })
+            .then(() => {
+                showNotification("Password updated successfully! You can now log in.", "success", 5000);
+                realResetPasswordModalContent.classList.remove("scale-100", "opacity-100");
+                realResetPasswordModalContent.classList.add("scale-95", "opacity-0");
+                setTimeout(() => {
+                    realResetPasswordModal.classList.add("hidden");
+                    masterPasswordForm.reset();
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }, 300);
+            })
+            .catch(error => {
+                console.error("Password reset error:", error);
+                showNotification(`Reset failed: ${error.message}`, "error", 5000);
+            });
+        });
+    }
+
+    // Submit: Master Update Email Form (Handles collision checking)
+    if (masterEmailForm) {
+        masterEmailForm.addEventListener("submit", (e) => {
+            e.preventDefault();
+            const token = realResetTokenEl.value;
+            const newEmail = masterEmailNewInput.value.trim();
+
+            executeEmailChange(token, newEmail, false);
+        });
+    }
+
+    // Submit: Collision Merge Confirmation Click
+    if (confirmMasterMergeBtn) {
+        confirmMasterMergeBtn.addEventListener("click", () => {
+            const token = realResetTokenEl.value;
+            const newEmail = masterEmailNewInput.value.trim();
+            
+            showNotification("Initiating cloud merge migration...", "info");
+            executeEmailChange(token, newEmail, true);
+        });
+    }
+
+    function executeEmailChange(token, newEmail, mergeAction) {
+        showNotification("Processing email update...", "info");
+        convexClient.mutation("auth:changeEmailWithToken", {
+            token,
+            newEmail,
+            mergeAction
+        })
+        .then(res => {
+            if (res.collision) {
+                showNotification(res.message, "warning", 6000);
+                if (masterCollisionPanel) masterCollisionPanel.classList.remove("hidden");
+                if (masterEmailActionButtons) masterEmailActionButtons.classList.add("hidden"); // Hide default submit/cancel to prevent error clicks
+            } else {
+                showNotification("Email successfully updated!", "success", 5000);
+                
+                // If they merged accounts, log them out since their old profile is deleted
+                if (res.merged) {
+                    showNotification(`Vault merged into target account! Please log into ${res.newEmail}.`, "success", 8000);
+                    localStorage.removeItem('snipvault_session_token');
+                    sessionToken = null;
+                    currentUser = null;
+                    showAuthView();
+                }
+
+                if (realResetPasswordModal && realResetPasswordModalContent) {
+                    realResetPasswordModalContent.classList.remove("scale-100", "opacity-100");
+                    realResetPasswordModalContent.classList.add("scale-95", "opacity-0");
+                    setTimeout(() => {
+                        realResetPasswordModal.classList.add("hidden");
+                        if (masterEmailForm) masterEmailForm.reset();
+                        if (masterCollisionPanel) masterCollisionPanel.classList.add("hidden");
+                        if (masterEmailActionButtons) masterEmailActionButtons.classList.remove("hidden");
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }, 300);
+                }
+            }
+        })
+        .catch(err => {
+            console.error("Email modification failed:", err);
+            showNotification(`Email change failed: ${err.message}`, "error", 5000);
         });
     }
 
@@ -917,17 +1162,18 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- Verify Email Simulated Button ---
+    // --- Real Email Verification Button ---
     if (verifyEmailBtn) {
         verifyEmailBtn.addEventListener("click", () => {
-            convexClient.mutation("auth:verifyEmail", { token: sessionToken })
+            const baseUrl = window.location.origin + window.location.pathname;
+            showNotification("Sending verification email...", "info");
+            convexClient.mutation("auth:sendVerificationEmail", { token: sessionToken, baseUrl })
                 .then(() => {
-                    showNotification("Email successfully verified! Verification badge activated.", "success");
-                    convexClient.query("auth:getUser", { token: sessionToken })
-                        .then(user => {
-                            currentUser = user;
-                            showAccountView();
-                        });
+                    showNotification("Verification email successfully sent! Please check your Spam or Junk folder if it does not arrive in your Inbox.", "success", 7500);
+                })
+                .catch(err => {
+                    console.error("Verification email error:", err);
+                    showNotification(`Failed to send verification email: ${err.message}`, "error", 5000);
                 });
         });
     }

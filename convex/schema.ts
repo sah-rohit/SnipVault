@@ -11,6 +11,9 @@ export default defineSchema({
     age: v.optional(v.number()),
     profilePic: v.optional(v.string()), // Base64 encoded cropped avatar
     isVerified: v.optional(v.boolean()), // Simulated verification badge status
+    lastResetRequestAt: v.optional(v.number()),
+    resetRequestTimestamps: v.optional(v.array(v.number())),
+    resendContactSynced: v.optional(v.boolean()),
   }).index("by_email", ["email"]),
 
   sessions: defineTable({
@@ -37,4 +40,11 @@ export default defineSchema({
     note: v.optional(v.string()),
     createdAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  verificationTokens: defineTable({
+    email: v.string(),
+    token: v.string(),
+    type: v.string(), // "verify_email" | "reset_password"
+    expiresAt: v.number(),
+  }).index("by_token", ["token"]),
 });

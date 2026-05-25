@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as categories from "../categories.js";
+import type * as email from "../email.js";
 import type * as snippets from "../snippets.js";
 
 import type {
@@ -21,6 +22,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   categories: typeof categories;
+  email: typeof email;
   snippets: typeof snippets;
 }>;
 

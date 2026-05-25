@@ -614,3 +614,312 @@ export const migrateGuestData = mutation({
     return { token, email: emailNormalized };
   },
 });
+
+// --- Secure Token-Based Verification and Password/Email Master Modifiers ---
+
+// 1. Generate & send password reset token
+export const requestPasswordReset = mutation({
+  args: {
+    email: v.string(),
+    baseUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const emailNormalized = args.email.trim().toLowerCase();
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", emailNormalized))
+      .unique();
+
+    // Secure design: Prevent user enumeration by returning success regardless
+    if (!user) return { success: true };
+
+    // Generate high-entropy secure token
+    const token = generateSecureHex(32);
+    const expiresAt = Date.now() + 1 * 60 * 60 * 1000; // 1 hour expiration
+
+    await ctx.db.insert("verificationTokens", {
+      email: emailNormalized,
+      token,
+      type: "reset_password",
+      expiresAt,
+    });
+
+    const resetLink = `${args.baseUrl}?resetToken=${token}`;
+    await ctx.scheduler.runAfter(0, internal.email.sendSystemEmail, {
+      to: emailNormalized,
+      subject: "SnipVault - Direct Master Account Modification Panel",
+      html: `
+        <div style="font-family:Inter,system-ui,-apple-system,sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #e5e7eb;border-radius:16px;">
+          <h2 style="color:#4f46e5;margin-bottom:16px;font-weight:800;">Master Credentials Authorization</h2>
+          <p style="color:#374151;font-size:14px;line-height:22px;">
+            We received a request to access your SnipVault credentials. Clicking the link below authorizes direct master modification of your password or registered email without needing your current password.
+          </p>
+          <div style="margin:24px 0;">
+            <a href="${resetLink}" style="display:inline-block;background-color:#4f46e5;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px;box-shadow:0 4px 6px -1px rgba(79,70,229,0.2);">Authorize Master Modification</a>
+          </div>
+          <p style="color:#9ca3af;font-size:12px;">This secure authorization link will automatically expire in 1 hour. If you did not make this request, please ignore this email safely.</p>
+        </div>
+      `,
+    });
+
+    return { success: true };
+  },
+});
+
+// 2. Query to securely validate reset link and load target email
+export const checkResetToken = query({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const tokenRecord = await ctx.db
+      .query("verificationTokens")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!tokenRecord || tokenRecord.type !== "reset_password" || Date.now() > tokenRecord.expiresAt) {
+      return null;
+    }
+    return { email: tokenRecord.email };
+  },
+});
+
+// 3. Reset password using a valid secure token
+export const resetPasswordWithToken = mutation({
+  args: {
+    token: v.string(),
+    newPassword: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const tokenRecord = await ctx.db
+      .query("verificationTokens")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!tokenRecord || tokenRecord.type !== "reset_password" || Date.now() > tokenRecord.expiresAt) {
+      throw new Error("Invalid or expired password reset link.");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", tokenRecord.email))
+      .unique();
+
+    if (!user) throw new Error("Target user account no longer exists.");
+
+    if (args.newPassword.length < 6) {
+      throw new Error("New password must be at least 6 characters.");
+    }
+
+    // Update salt and hash safely
+    const newSalt = generateSecureHex(16);
+    const newHash = await hashPassword(args.newPassword, newSalt);
+
+    await ctx.db.patch(user._id, {
+      passwordHash: newHash,
+      salt: newSalt,
+    });
+
+    // Delete used token to prevent replay attacks
+    await ctx.db.delete(tokenRecord._id);
+
+    return { success: true };
+  },
+});
+
+// 4. Modify Account Email with Token (and handle data-merge collision)
+export const changeEmailWithToken = mutation({
+  args: {
+    token: v.string(),
+    newEmail: v.string(),
+    mergeAction: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const tokenRecord = await ctx.db
+      .query("verificationTokens")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!tokenRecord || tokenRecord.type !== "reset_password" || Date.now() > tokenRecord.expiresAt) {
+      throw new Error("Invalid or expired authorization link.");
+    }
+
+    const oldUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", tokenRecord.email))
+      .unique();
+
+    if (!oldUser) throw new Error("Source user account not found.");
+
+    const newEmailNormalized = args.newEmail.trim().toLowerCase();
+    if (!newEmailNormalized) throw new Error("Invalid new email address.");
+
+    // Check if new email address already belongs to another active account
+    const targetUser = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", newEmailNormalized))
+      .unique();
+
+    if (targetUser) {
+      if (!args.mergeAction) {
+        // Return warning to frontend to show merge conflict warning
+        return {
+          collision: true,
+          message: `An active account already exists for ${newEmailNormalized}. Would you like to merge all snippets and categories from your current vault into that account?`,
+        };
+      }
+
+      // Merge Mode: Migrate oldUser snippets/categories to targetUser
+      const oldCategories = await ctx.db
+        .query("categories")
+        .withIndex("by_user", (q) => q.eq("userId", oldUser._id))
+        .collect();
+
+      const targetCategories = await ctx.db
+        .query("categories")
+        .withIndex("by_user", (q) => q.eq("userId", targetUser._id))
+        .collect();
+
+      const targetCatNames = new Set(targetCategories.map(c => c.name.toLowerCase()));
+
+      // Migrate non-duplicate categories
+      for (const cat of oldCategories) {
+        if (!targetCatNames.has(cat.name.toLowerCase())) {
+          await ctx.db.insert("categories", {
+            userId: targetUser._id,
+            name: cat.name,
+            createdAt: cat.createdAt,
+          });
+        }
+        await ctx.db.delete(cat._id);
+      }
+
+      // Migrate snippets (with rename logic if duplicate text exists)
+      const oldSnippets = await ctx.db
+        .query("snippets")
+        .withIndex("by_user", (q) => q.eq("userId", oldUser._id))
+        .collect();
+
+      const targetSnippets = await ctx.db
+        .query("snippets")
+        .withIndex("by_user", (q) => q.eq("userId", targetUser._id))
+        .collect();
+
+      const targetSnippetTexts = new Set(targetSnippets.map(s => s.text.trim().toLowerCase()));
+
+      for (const snippet of oldSnippets) {
+        let text = snippet.text;
+        if (targetSnippetTexts.has(text.trim().toLowerCase())) {
+          text = `[Merged] ${text}`;
+        }
+        await ctx.db.insert("snippets", {
+          userId: targetUser._id,
+          text,
+          url: snippet.url,
+          category: snippet.category,
+          note: snippet.note,
+          createdAt: snippet.createdAt,
+        });
+        await ctx.db.delete(snippet._id);
+      }
+
+      // Delete old user sessions
+      const oldSessions = await ctx.db
+        .query("sessions")
+        .withIndex("by_user", (q) => q.eq("userId", oldUser._id))
+        .collect();
+      for (const s of oldSessions) {
+        await ctx.db.delete(s._id);
+      }
+
+      // Purge the empty source container account record
+      await ctx.db.delete(oldUser._id);
+
+      // Invalidate used reset link token
+      await ctx.db.delete(tokenRecord._id);
+
+      return { merged: true, newEmail: newEmailNormalized };
+    }
+
+    // Direct Update Mode: Just change oldUser email address
+    await ctx.db.patch(oldUser._id, { email: newEmailNormalized, isVerified: false });
+
+    // Invalidate reset link token
+    await ctx.db.delete(tokenRecord._id);
+
+    return { merged: false, success: true };
+  },
+});
+
+// 5. Send Verification Link to Current User
+export const sendVerificationEmail = mutation({
+  args: {
+    token: v.string(),
+    baseUrl: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx.db, args.token);
+    if (!userId) throw new Error("Unauthenticated.");
+
+    const user = await ctx.db.get(userId);
+    if (!user) throw new Error("User not found.");
+
+    // Generate high-entropy verification token
+    const token = generateSecureHex(32);
+    const expiresAt = Date.now() + 2 * 24 * 60 * 60 * 1000; // 48 hours
+
+    await ctx.db.insert("verificationTokens", {
+      email: user.email,
+      token,
+      type: "verify_email",
+      expiresAt,
+    });
+
+    const verifyLink = `${args.baseUrl}?verifyToken=${token}`;
+    await ctx.scheduler.runAfter(0, internal.email.sendSystemEmail, {
+      to: user.email,
+      subject: "SnipVault - Verify your email address",
+      html: `
+        <div style="font-family:Inter,system-ui,-apple-system,sans-serif;max-width:600px;margin:0 auto;padding:24px;border:1px solid #e5e7eb;border-radius:16px;">
+          <h2 style="color:#4f46e5;margin-bottom:16px;font-weight:800;">Verify your SnipVault Vault</h2>
+          <p style="color:#374151;font-size:14px;line-height:22px;">
+            Click the link below to verify ownership of this email address and activate your account's verification badge:
+          </p>
+          <div style="margin:24px 0;">
+            <a href="${verifyLink}" style="display:inline-block;background-color:#10b981;color:white;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;font-size:14px;box-shadow:0 4px 6px -1px rgba(16,185,129,0.2);">Verify Account Now</a>
+          </div>
+          <p style="color:#9ca3af;font-size:12px;">This link will remain valid for 48 hours. If you did not sign up for SnipVault, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+
+    return { success: true };
+  },
+});
+
+// 6. Verify Email using secure token
+export const verifyEmailWithToken = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const tokenRecord = await ctx.db
+      .query("verificationTokens")
+      .withIndex("by_token", (q) => q.eq("token", args.token))
+      .unique();
+
+    if (!tokenRecord || tokenRecord.type !== "verify_email" || Date.now() > tokenRecord.expiresAt) {
+      throw new Error("Invalid or expired verification link.");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", tokenRecord.email))
+      .unique();
+
+    if (!user) throw new Error("Target user account no longer exists.");
+
+    await ctx.db.patch(user._id, { isVerified: true });
+
+    // Delete token
+    await ctx.db.delete(tokenRecord._id);
+
+    return { success: true };
+  },
+});
