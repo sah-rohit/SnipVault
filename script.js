@@ -305,8 +305,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const cropCanvasEl = document.getElementById('crop-canvas');
     
     const profileNameViewEl = document.getElementById('profile-name-view');
+    const editNameBtn = document.getElementById('edit-name-btn');
+    const profileNameEditContainer = document.getElementById('profile-name-edit-container');
+    const profileNameInput = document.getElementById('profile-name-input');
+    const saveNameBtn = document.getElementById('save-name-btn');
+    const cancelNameBtn = document.getElementById('cancel-name-btn');
+    
     const profileEmailViewEl = document.getElementById('profile-email-view');
     const profileDobViewEl = document.getElementById('profile-dob-view');
+    const profileJoinedViewEl = document.getElementById('profile-joined-view');
     
     const verificationBadgeVerifiedEl = document.getElementById('verification-badge-verified');
     const verifyEmailBtn = document.getElementById('verify-email-btn');
@@ -578,6 +585,16 @@ const migrateNameEl = document.getElementById('migrate-name');
             if(profileNameViewEl) profileNameViewEl.textContent = currentUser.name;
             if(profileEmailViewEl) profileEmailViewEl.textContent = currentUser.email;
             if(profileDobViewEl) profileDobViewEl.textContent = `${currentUser.dob} (Age ${currentUser.age})`;
+            if(profileJoinedViewEl) {
+                if (currentUser.created_at) {
+                    const joinedDate = new Date(currentUser.created_at);
+                    profileJoinedViewEl.textContent = joinedDate.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+                } else {
+                    profileJoinedViewEl.textContent = "N/A";
+                }
+            }
+            if(profileNameEditContainer) profileNameEditContainer.classList.add('hidden');
+            if(profileNameViewEl) profileNameViewEl.parentElement.classList.remove('hidden');
             
             // Verification badge
             if (currentUser.isVerified) {
@@ -1159,6 +1176,59 @@ const migrateNameEl = document.getElementById('migrate-name');
                             });
                     });
             }
+        });
+    }
+
+    // --- Profile Name Editing Event Listeners ---
+    if (editNameBtn) {
+        editNameBtn.addEventListener("click", () => {
+            if (profileNameEditContainer && profileNameInput && currentUser) {
+                profileNameInput.value = currentUser.name || "";
+                profileNameEditContainer.classList.remove("hidden");
+                if (profileNameViewEl) profileNameViewEl.parentElement.classList.add("hidden");
+            }
+        });
+    }
+
+    if (cancelNameBtn) {
+        cancelNameBtn.addEventListener("click", () => {
+            if (profileNameEditContainer) profileNameEditContainer.classList.add("hidden");
+            if (profileNameViewEl) profileNameViewEl.parentElement.classList.remove("hidden");
+        });
+    }
+
+    if (saveNameBtn) {
+        saveNameBtn.addEventListener("click", () => {
+            if (!profileNameInput) return;
+            const newName = profileNameInput.value.trim();
+            if (!newName) {
+                showNotification("Name cannot be empty.", "error");
+                return;
+            }
+
+            showNotification("Updating account name...", "info");
+            convexClient.mutation("auth:updateName", {
+                token: sessionToken,
+                name: newName
+            })
+            .then(() => {
+                showNotification("Name updated successfully!", "success");
+                if (profileNameEditContainer) profileNameEditContainer.classList.add("hidden");
+                if (profileNameViewEl) profileNameViewEl.parentElement.classList.remove("hidden");
+                
+                // Refresh Profile and cache
+                convexClient.query("auth:getUser", { token: sessionToken })
+                    .then(user => {
+                        currentUser = user;
+                        localStorage.setItem('snipvault_cached_user', JSON.stringify(user));
+                        showAppView();
+                        showAccountView();
+                    });
+            })
+            .catch(err => {
+                console.error(err);
+                showNotification(`Failed to update name: ${err.message}`, "error");
+            });
         });
     }
 

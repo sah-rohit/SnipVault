@@ -69,6 +69,7 @@ export const signUp = mutation({
       dob: args.dob,
       age: args.age,
       isVerified: false,
+      created_at: Date.now(),
     });
 
     const defaultCategories = ["General", "Code Snippets", "Recipes", "Bookmarks", "Ideas", "Learning"];
@@ -168,6 +169,7 @@ export const getUser = query({
       age: user.age || 26,
       profilePic: user.profilePic,
       isVerified: user.isVerified || false,
+      created_at: user.created_at || user._creationTime,
     };
   },
 });
@@ -184,6 +186,25 @@ export const updateProfilePic = mutation({
 
     await ctx.db.patch(userId, {
       profilePic: args.profilePic || undefined,
+    });
+    return { success: true };
+  },
+});
+
+export const updateName = mutation({
+  args: {
+    token: v.string(),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx.db, args.token);
+    if (!userId) throw new Error("Unauthenticated.");
+
+    const nameTrimmed = args.name.trim();
+    if (!nameTrimmed) throw new Error("Name cannot be empty.");
+
+    await ctx.db.patch(userId, {
+      name: nameTrimmed,
     });
     return { success: true };
   },
@@ -561,6 +582,7 @@ export const migrateGuestData = mutation({
         dob: args.dob,
         age: args.age,
         isVerified: false,
+        created_at: Date.now(),
       });
 
       // 2. Upload Categories

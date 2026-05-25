@@ -14,6 +14,7 @@ export default defineSchema({
     lastResetRequestAt: v.optional(v.number()),
     resetRequestTimestamps: v.optional(v.array(v.number())),
     resendContactSynced: v.optional(v.boolean()),
+    created_at: v.optional(v.number()),
   }).index("by_email", ["email"]),
 
   sessions: defineTable({
