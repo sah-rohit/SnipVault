@@ -544,6 +544,17 @@ const migrateNameEl = document.getElementById('migrate-name');
 
     // --- Intro Animation ---
     function playIntroAnimation(onCompleteCallback) {
+        if (localStorage.getItem("snipvault_skip_intro") === "true") {
+            localStorage.removeItem("snipvault_skip_intro");
+            if (introOverlay) {
+                introOverlay.style.display = 'none';
+                introOverlay.style.opacity = '0';
+                introOverlay.style.pointerEvents = 'none';
+            }
+            if (onCompleteCallback) onCompleteCallback();
+            return;
+        }
+
         if (!introOverlay) { 
             if(onCompleteCallback) onCompleteCallback();
             return; 
@@ -1164,18 +1175,20 @@ const migrateNameEl = document.getElementById('migrate-name');
 
     if (deleteAvatarBtn) {
         deleteAvatarBtn.addEventListener("click", () => {
-            if (confirm("Delete profile picture?")) {
-                convexClient.mutation("auth:updateProfilePic", { token: sessionToken, profilePic: undefined })
-                    .then(() => {
-                        showNotification("Profile photo deleted.", "info");
-                        convexClient.query("auth:getUser", { token: sessionToken })
-                            .then(user => {
-                                currentUser = user;
-                                showAppView();
-                                showAccountView();
-                            });
-                    });
-            }
+            customConfirm("Are you sure you want to permanently delete your profile picture?", "Delete Photo?", "fa-trash-alt").then(confirmed => {
+                if (confirmed) {
+                    convexClient.mutation("auth:updateProfilePic", { token: sessionToken, profilePic: undefined })
+                        .then(() => {
+                            showNotification("Profile photo deleted.", "info");
+                            convexClient.query("auth:getUser", { token: sessionToken })
+                                .then(user => {
+                                    currentUser = user;
+                                    showAppView();
+                                    showAccountView();
+                                });
+                        });
+                }
+            });
         });
     }
 
@@ -1315,13 +1328,15 @@ const migrateNameEl = document.getElementById('migrate-name');
                         btn.className = "bg-red-50 hover:bg-red-150 text-red-655 font-bold px-2 py-1 rounded text-xs transition-colors border border-red-100";
                         btn.textContent = "Revoke";
                         btn.addEventListener("click", () => {
-                            if (confirm("Revoke this login session?")) {
-                                convexClient.mutation("auth:revokeSession", { token: sessionToken, sessionId: s.id })
-                                    .then(() => {
-                                        showNotification("Session revoked.", "info");
-                                        loadSessionsLog();
-                                    });
-                            }
+                            customConfirm("Are you sure you want to revoke this login session?", "Revoke Session?", "fa-user-times").then(confirmed => {
+                                if (confirmed) {
+                                    convexClient.mutation("auth:revokeSession", { token: sessionToken, sessionId: s.id })
+                                        .then(() => {
+                                            showNotification("Session revoked.", "info");
+                                            loadSessionsLog();
+                                        });
+                                }
+                            });
                         });
                         cellAction.appendChild(btn);
                     }
@@ -1337,13 +1352,15 @@ const migrateNameEl = document.getElementById('migrate-name');
 
     if (revokeAllOthersBtn) {
         revokeAllOthersBtn.addEventListener("click", () => {
-            if (confirm("Logout from all other devices?")) {
-                convexClient.mutation("auth:revokeAllOtherSessions", { token: sessionToken })
-                    .then(res => {
-                        showNotification(`Logged out from ${res.count} other devices successfully.`, "success");
-                        loadSessionsLog();
-                    });
-            }
+            customConfirm("Are you sure you want to logout from all other devices?", "Logout Other Devices?", "fa-history").then(confirmed => {
+                if (confirmed) {
+                    convexClient.mutation("auth:revokeAllOtherSessions", { token: sessionToken })
+                        .then(res => {
+                            showNotification(`Logged out from ${res.count} other devices successfully.`, "success");
+                            loadSessionsLog();
+                        });
+                }
+            });
         });
     }
 
@@ -1694,6 +1711,100 @@ const migrateNameEl = document.getElementById('migrate-name');
         } else if (selectElement.id === 'filter-category') {
             selectElement.value = ""; 
         }
+
+        initCustomDropdown(selectElement);
+    }
+
+    function initCustomDropdown(selectElement) {
+        if (!selectElement) return;
+        
+        // Hide the native select
+        selectElement.classList.add("hidden");
+
+        // Check if custom dropdown container already exists next to it
+        let customDropdown = selectElement.nextElementSibling;
+        if (!customDropdown || !customDropdown.classList.contains("custom-dropdown-container")) {
+            customDropdown = document.createElement("div");
+            customDropdown.className = "custom-dropdown-container relative w-full sm:w-auto mt-1 flex-grow";
+            selectElement.parentNode.insertBefore(customDropdown, selectElement.nextSibling);
+        }
+
+        const selectedText = selectElement.options[selectElement.selectedIndex]?.textContent || "Select Option";
+        customDropdown.innerHTML = `
+            <button type="button" class="dropdown-trigger-btn flex justify-between items-center w-full p-3 border border-gray-300 rounded-lg shadow-sm bg-white text-sm hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors">
+                <span class="truncate pr-2 font-medium text-gray-800">${selectedText}</span>
+                <i class="fas fa-chevron-down text-gray-400 text-xs transition-transform duration-200"></i>
+            </button>
+            <div class="dropdown-options-card hidden absolute left-0 right-0 mt-1.5 bg-white border border-gray-200 rounded-xl shadow-2xl z-[5000] max-h-60 overflow-y-auto transition-all duration-150 transform scale-95 opacity-0 origin-top">
+                <div class="py-1.5 divide-y divide-gray-50 text-xs font-semibold text-gray-700"></div>
+            </div>
+        `;
+
+        const triggerBtn = customDropdown.querySelector(".dropdown-trigger-btn");
+        const optionsCard = customDropdown.querySelector(".dropdown-options-card");
+        const optionsList = optionsCard.querySelector("div");
+        const chevron = triggerBtn.querySelector(".fa-chevron-down");
+
+        Array.from(selectElement.options).forEach((opt, idx) => {
+            const optBtn = document.createElement("button");
+            optBtn.type = "button";
+            optBtn.className = "w-full text-left px-4 py-2.5 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex justify-between items-center";
+            if (idx === selectElement.selectedIndex) {
+                optBtn.className += " bg-indigo-50 text-indigo-700 font-bold";
+            }
+            optBtn.innerHTML = `<span>${opt.textContent}</span>`;
+            if (idx === selectElement.selectedIndex) {
+                optBtn.innerHTML += `<i class="fas fa-check text-xs"></i>`;
+            }
+
+            optBtn.addEventListener("click", () => {
+                selectElement.selectedIndex = idx;
+                selectElement.dispatchEvent(new Event("change"));
+                closeDropdown();
+            });
+
+            optionsList.appendChild(optBtn);
+        });
+
+        function openDropdown() {
+            document.querySelectorAll(".dropdown-options-card").forEach(el => {
+                if (el !== optionsCard) {
+                    el.classList.add("hidden");
+                    const ch = el.previousElementSibling?.querySelector(".fa-chevron-down");
+                    if (ch) ch.classList.remove("rotate-180");
+                }
+            });
+
+            optionsCard.classList.remove("hidden");
+            optionsCard.offsetHeight;
+            optionsCard.classList.remove("scale-95", "opacity-0");
+            optionsCard.classList.add("scale-100", "opacity-100");
+            chevron.classList.add("rotate-180");
+        }
+
+        function closeDropdown() {
+            optionsCard.classList.remove("scale-100", "opacity-100");
+            optionsCard.classList.add("scale-95", "opacity-0");
+            chevron.classList.remove("rotate-180");
+            setTimeout(() => {
+                optionsCard.classList.add("hidden");
+            }, 150);
+        }
+
+        triggerBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (optionsCard.classList.contains("hidden")) {
+                openDropdown();
+            } else {
+                closeDropdown();
+            }
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!customDropdown.contains(e.target)) {
+                closeDropdown();
+            }
+        });
     }
 
     const defaultGuestCategories = ["General", "Code Snippets", "Recipes", "Bookmarks", "Ideas", "Learning"].map((name, i) => ({
@@ -2172,55 +2283,57 @@ const migrateNameEl = document.getElementById('migrate-name');
             showNotification('You must be logged in to delete snippets.', 'error');
             return;
         }
-        if (confirm('Are you sure you want to permanently delete this snippet?')) {
-            // Check if it is an offline-pending snippet (which has a numeric/Date.now() ID)
-            const isOfflineSnippet = typeof snippetId === 'number' || !isNaN(snippetId);
-            if (isOfflineSnippet) {
-                try {
-                    await deleteOfflineSnippet(Number(snippetId));
-                    showNotification('Offline pending snippet removed.', 'info');
-                    localSnippetsCache = localSnippetsCache.filter(s => s.id !== snippetId);
-                    renderSnippets();
+        customConfirm('Are you sure you want to permanently delete this snippet?', 'Delete Snippet?', 'fa-trash-alt').then(async (confirmed) => {
+            if (confirmed) {
+                // Check if it is an offline-pending snippet (which has a numeric/Date.now() ID)
+                const isOfflineSnippet = typeof snippetId === 'number' || !isNaN(snippetId);
+                if (isOfflineSnippet) {
+                    try {
+                        await deleteOfflineSnippet(Number(snippetId));
+                        showNotification('Offline pending snippet removed.', 'info');
+                        localSnippetsCache = localSnippetsCache.filter(s => s.id !== snippetId);
+                        renderSnippets();
+                        if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
+                            showMainView(); 
+                        }
+                        return;
+                    } catch(err) {
+                        console.error("Error deleting offline snippet:", err);
+                        showNotification('Failed to remove offline snippet.', 'error');
+                        return;
+                    }
+                }
+
+                // Guest Mode Delete
+                if (sessionToken === "guest") {
+                    let stored = localStorage.getItem("snipvault_guest_snippets");
+                    let list = stored ? JSON.parse(stored) : [];
+                    list = list.filter(s => s._id !== snippetId);
+                    localStorage.setItem("snipvault_guest_snippets", JSON.stringify(list));
+                    showNotification('Snippet deleted.', 'info');
+                    loadUserSnippets();
                     if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
                         showMainView(); 
                     }
                     return;
-                } catch(err) {
-                    console.error("Error deleting offline snippet:", err);
-                    showNotification('Failed to remove offline snippet.', 'error');
-                    return;
                 }
-            }
 
-            // Guest Mode Delete
-            if (sessionToken === "guest") {
-                let stored = localStorage.getItem("snipvault_guest_snippets");
-                let list = stored ? JSON.parse(stored) : [];
-                list = list.filter(s => s._id !== snippetId);
-                localStorage.setItem("snipvault_guest_snippets", JSON.stringify(list));
-                showNotification('Snippet deleted.', 'info');
-                loadUserSnippets();
-                if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
-                    showMainView(); 
+                // Standard Convex Delete
+                try {
+                    await convexClient.mutation("snippets:deleteSnippet", {
+                        token: sessionToken,
+                        id: snippetId
+                    });
+                    showNotification('Snippet deleted.', 'info');
+                    if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
+                        showMainView(); 
+                    }
+                } catch (error) {
+                    console.error("Error deleting snippet: ", error);
+                    showNotification('Failed to delete snippet.', 'error');
                 }
-                return;
             }
-
-            // Standard Convex Delete
-            try {
-                await convexClient.mutation("snippets:deleteSnippet", {
-                    token: sessionToken,
-                    id: snippetId
-                });
-                showNotification('Snippet deleted.', 'info');
-                if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
-                    showMainView(); 
-                }
-            } catch (error) {
-                console.error("Error deleting snippet: ", error);
-                showNotification('Failed to delete snippet.', 'error');
-            }
-        }
+        });
     }
     
     function setFooterYear() {
@@ -2241,6 +2354,517 @@ const migrateNameEl = document.getElementById('migrate-name');
     if(cancelEditSnippetBtn) cancelEditSnippetBtn.addEventListener('click', () => {
         if (currentEditingSnippetId) showDetailView(currentEditingSnippetId, 'view');
     });
+
+    // --- Mandatory Terms & Compliance Onboarding Flow ---
+    let tcAgreedState = {
+        signup: { terms: false, privacy: false },
+        guest: { terms: false, privacy: false },
+        migrate: { terms: false, privacy: false }
+    };
+
+    function checkAgreementStatus(type) {
+        const checkbox = document.getElementById(`${type}-agree-checkbox`);
+        const submitBtn = type === 'signup' ? document.getElementById("signup-submit-btn")
+                        : type === 'guest' ? document.getElementById("confirm-guest-btn")
+                        : document.getElementById("migrate-submit-btn");
+
+        if (!checkbox || !submitBtn) return;
+
+        const bothAgreed = tcAgreedState[type].terms && tcAgreedState[type].privacy;
+        
+        if (bothAgreed) {
+            checkbox.disabled = false;
+            checkbox.checked = true;
+            checkbox.classList.remove("cursor-not-allowed");
+            
+            // Unlock action submit button
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("bg-gray-300", "text-gray-500", "cursor-not-allowed");
+            if (type === 'signup') {
+                submitBtn.className = "w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold py-3 px-6 rounded-lg shadow-lg hover:shadow-green-150/50 transition-all duration-305 text-sm flex items-center justify-center space-x-2 mt-2 transform hover:scale-[1.015]";
+            } else if (type === 'guest') {
+                submitBtn.className = "flex-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors text-sm transform hover:scale-[1.02]";
+            } else if (type === 'migrate') {
+                submitBtn.className = "flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg shadow transition-colors text-sm transform hover:scale-[1.02]";
+            }
+        } else {
+            checkbox.disabled = true;
+            checkbox.checked = false;
+            checkbox.classList.add("cursor-not-allowed");
+            
+            // Lock action submit button
+            submitBtn.disabled = true;
+            submitBtn.className = "w-full bg-gray-300 text-gray-500 font-bold py-3 px-6 rounded-lg shadow cursor-not-allowed transition-all duration-300 text-sm flex items-center justify-center space-x-2 mt-2";
+            if (type === 'guest' || type === 'migrate') {
+                submitBtn.className = "flex-1 bg-gray-300 text-gray-500 font-bold py-3 px-4 rounded-lg shadow cursor-not-allowed transition-colors text-sm";
+            }
+        }
+    }
+
+    let readingCountdownTimer = null;
+
+    function openPolicyReadingModal(policyType, flowType) {
+        const prefix = flowType === 'signup' ? 'auth' : flowType;
+        const panel = document.getElementById(`${prefix}-policy-panel`);
+        const titleEl = document.getElementById(`${prefix}-policy-title`);
+        const bodyEl = document.getElementById(`${prefix}-policy-body`);
+        const timerTextEl = document.getElementById(`${prefix}-policy-timer-text`);
+        const agreeBtn = document.getElementById(`${prefix}-policy-agree-btn`);
+        const closeBtn = document.getElementById(`${prefix}-policy-close-btn`);
+
+        if (!panel || !bodyEl || !timerTextEl || !agreeBtn || !closeBtn) return;
+
+        const isTerms = policyType === 'terms';
+        titleEl.textContent = isTerms ? "Terms & Conditions" : "Privacy Policy";
+        bodyEl.innerHTML = "<div class='text-center py-8 font-sans font-semibold text-gray-500'><i class='fas fa-spinner fa-spin mr-2'></i>Loading policy content...</div>";
+        
+        // Open slide-over transition
+        panel.classList.remove("hidden");
+        panel.offsetHeight; // trigger reflow
+        panel.classList.remove("translate-x-full");
+        panel.classList.add("translate-x-0");
+
+        let count = 5;
+        agreeBtn.disabled = true;
+        agreeBtn.className = "bg-gray-300 text-gray-500 font-bold py-2 px-4 rounded-lg shadow text-xs cursor-not-allowed transition-all duration-300";
+        agreeBtn.textContent = `Agree (5s)`;
+        timerTextEl.textContent = "Please read completely.";
+        timerTextEl.className = "text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded animate-pulse";
+
+        if (readingCountdownTimer) clearInterval(readingCountdownTimer);
+        readingCountdownTimer = setInterval(() => {
+            count--;
+            if (count > 0) {
+                agreeBtn.textContent = `Agree (${count}s)`;
+            } else {
+                clearInterval(readingCountdownTimer);
+                agreeBtn.disabled = false;
+                agreeBtn.className = "bg-indigo-650 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg shadow transition-all duration-150 transform hover:scale-[1.02] text-xs cursor-pointer";
+                agreeBtn.textContent = "I Agree and Accept";
+                timerTextEl.textContent = "You can now agree.";
+                timerTextEl.className = "text-[10px] font-bold text-green-700 bg-green-50 px-2 py-1 rounded";
+            }
+        }, 1000);
+
+        const fetchUrl = isTerms ? "terms.html" : "privacy.html";
+        fetch(fetchUrl)
+            .then(res => res.text())
+            .then(html => {
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = html;
+                const article = tempDiv.querySelector("article");
+                if (article) {
+                    const articleClone = article.cloneNode(true);
+                    
+                    // Remove redundant top headings
+                    const mainH1 = articleClone.querySelector("h1");
+                    if (mainH1) mainH1.remove();
+
+                    // Clear excessive paddings/margins/sizes optimized for Auth Page
+                    articleClone.querySelectorAll("h2").forEach(h2 => {
+                        h2.className = "text-[12px] font-extrabold text-gray-800 mt-4 mb-1.5 font-mono flex items-center";
+                    });
+                    articleClone.querySelectorAll("p").forEach(p => {
+                        p.className = "text-[10.5px] text-gray-600 mb-2 leading-relaxed";
+                    });
+                    articleClone.querySelectorAll("ul").forEach(ul => {
+                        ul.className = "list-disc list-inside text-[10.5px] text-gray-600 space-y-1 mb-2";
+                    });
+                    articleClone.querySelectorAll("div").forEach(div => {
+                        div.className = "p-2.5 bg-yellow-50 border-l-4 border-yellow-500 font-mono text-[9px] text-yellow-800 mb-2 rounded-md";
+                    });
+                    articleClone.querySelectorAll("table").forEach(table => {
+                        table.className = "min-w-full text-[9px] text-left mb-2 border border-gray-250 rounded-lg overflow-hidden";
+                    });
+                    articleClone.querySelectorAll("tr").forEach(tr => {
+                        tr.className = "border-b border-gray-150 hover:bg-indigo-50/20";
+                    });
+                    articleClone.querySelectorAll("td").forEach(td => {
+                        td.className = "p-1.5 font-mono text-gray-650";
+                    });
+                    articleClone.querySelectorAll("th").forEach(th => {
+                        th.className = "p-1.5 bg-gray-105 font-bold text-gray-700 uppercase font-sans";
+                    });
+
+                    bodyEl.innerHTML = articleClone.innerHTML;
+                } else {
+                    bodyEl.textContent = "Failed to load formatting. Please refer to direct pages.";
+                }
+            })
+            .catch(err => {
+                bodyEl.innerHTML = `
+                    <h4 class="font-bold text-gray-850 mb-1.5 text-xs">${isTerms ? "SnipVault Terms of Service Summary" : "SnipVault Privacy Shield & Policy Summary"}</h4>
+                    <p class="mb-2 text-[10.5px] leading-relaxed">By accessing SnipVault, you explicitly agree to these clear developer-centric terms:</p>
+                    <ul class="list-disc pl-4 space-y-1 text-[10.5px] mb-2">
+                        <li><strong>Data Ownership:</strong> All snippets and categories belong 100% to you. I host no mining or selling tools.</li>
+                        <li><strong>Secure Sessions:</strong> I use safe salt/hashing on Brevo & Convex. You are responsible for keeping passwords secure.</li>
+                        <li><strong>GDPR Compliance:</strong> You can export everything as JSON or wipe all cloud records instantly with zero residuals.</li>
+                        <li><strong>Offline Sandbox:</strong> In guest mode, all snippets stay locally inside your browser storage completely offline.</li>
+                    </ul>
+                    <p class="font-bold text-indigo-600 text-[10.5px]">SnipVault is crafted by Rohit as a 100% free open-source utility.</p>
+                `;
+            });
+
+        const closePanel = () => {
+            clearInterval(readingCountdownTimer);
+            panel.classList.remove("translate-x-0");
+            panel.classList.add("translate-x-full");
+            setTimeout(() => {
+                panel.classList.add("hidden");
+            }, 300);
+
+            // Clean event listener clones
+            const newAgreeBtn = agreeBtn.cloneNode(true);
+            const newCloseBtn = closeBtn.cloneNode(true);
+            agreeBtn.replaceWith(newAgreeBtn);
+            closeBtn.replaceWith(newCloseBtn);
+        };
+
+        closeBtn.addEventListener("click", closePanel);
+        agreeBtn.addEventListener("click", () => {
+            tcAgreedState[flowType][policyType] = true;
+            checkAgreementStatus(flowType);
+            closePanel();
+            showNotification(`Agreed to ${isTerms ? 'Terms & Conditions' : 'Privacy Policy'} successfully!`, "success");
+        });
+    }
+
+    setTimeout(() => {
+        const signupTermsLink = document.getElementById("signup-terms-link");
+        const signupPrivacyLink = document.getElementById("signup-privacy-link");
+        const guestTermsLink = document.getElementById("guest-terms-link");
+        const guestPrivacyLink = document.getElementById("guest-privacy-link");
+        const migrateTermsLink = document.getElementById("migrate-terms-link");
+        const migratePrivacyLink = document.getElementById("migrate-privacy-link");
+
+        if (signupTermsLink) signupTermsLink.addEventListener("click", () => openPolicyReadingModal('terms', 'signup'));
+        if (signupPrivacyLink) signupPrivacyLink.addEventListener("click", () => openPolicyReadingModal('privacy', 'signup'));
+        if (guestTermsLink) guestTermsLink.addEventListener("click", () => openPolicyReadingModal('terms', 'guest'));
+        if (guestPrivacyLink) guestPrivacyLink.addEventListener("click", () => openPolicyReadingModal('privacy', 'guest'));
+        if (migrateTermsLink) migrateTermsLink.addEventListener("click", () => openPolicyReadingModal('terms', 'migrate'));
+        if (migratePrivacyLink) migratePrivacyLink.addEventListener("click", () => openPolicyReadingModal('privacy', 'migrate'));
+    }, 100);
+
+    // --- Custom Confirm Modal Promise ---
+    function customConfirm(message, title = "Are you sure?", iconClass = "fa-question-circle") {
+        return new Promise((resolve) => {
+            const modal = document.getElementById("custom-confirm-modal");
+            const content = document.getElementById("custom-confirm-modal-content");
+            const titleEl = document.getElementById("custom-confirm-title");
+            const messageEl = document.getElementById("custom-confirm-message");
+            const iconEl = document.getElementById("custom-confirm-icon");
+            const yesBtn = document.getElementById("custom-confirm-yes-btn");
+            const noBtn = document.getElementById("custom-confirm-no-btn");
+
+            if (!modal || !content) {
+                resolve(confirm(message));
+                return;
+            }
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            iconEl.className = `fas ${iconClass} fa-2x`;
+
+            modal.classList.remove("hidden");
+            modal.offsetHeight; // trigger reflow
+            content.classList.remove("scale-95", "opacity-0");
+            content.classList.add("scale-100", "opacity-100");
+
+            const handleDecision = (choice) => {
+                content.classList.remove("scale-100", "opacity-100");
+                content.classList.add("scale-95", "opacity-0");
+                setTimeout(() => {
+                    modal.classList.add("hidden");
+                }, 300);
+                
+                yesBtn.replaceWith(yesBtn.cloneNode(true));
+                noBtn.replaceWith(noBtn.cloneNode(true));
+                resolve(choice);
+            };
+
+            document.getElementById("custom-confirm-yes-btn").addEventListener("click", () => handleDecision(true));
+            document.getElementById("custom-confirm-no-btn").addEventListener("click", () => handleDecision(false));
+        });
+    }
+
+    // --- Custom Context Menu Logic & Handlers ---
+    document.addEventListener("contextmenu", (e) => {
+        // Prevent default context menu
+        e.preventDefault();
+        showCustomContextMenu(e.clientX, e.clientY);
+    });
+
+    document.addEventListener("click", (e) => {
+        const menu = document.getElementById("custom-context-menu");
+        if (menu && !menu.contains(e.target)) {
+            hideCustomContextMenu();
+        }
+    });
+
+    function showCustomContextMenu(x, y) {
+        const menu = document.getElementById("custom-context-menu");
+        if (!menu) return;
+
+        // Check text selection
+        const selection = window.getSelection().toString().trim();
+        const quickSaveBtn = document.getElementById("menu-quick-save");
+        if (quickSaveBtn) {
+            if (selection.length > 0) {
+                quickSaveBtn.classList.remove("hidden");
+                quickSaveBtn.classList.add("flex");
+            } else {
+                quickSaveBtn.classList.add("hidden");
+                quickSaveBtn.classList.remove("flex");
+            }
+        }
+
+        // Context-aware options visibility filtering
+        const newSnippetBtn = document.getElementById("menu-new-snippet");
+        const openVaultBtn = document.getElementById("menu-open-vault");
+        const manageAccountBtn = document.getElementById("menu-manage-account");
+        const exportBackupBtn = document.getElementById("menu-export-backup");
+        const syncBtn = document.getElementById("menu-sync");
+        const logoutBtn = document.getElementById("menu-logout");
+
+        const isOnAuthPage = appContainer && appContainer.classList.contains("hidden");
+
+        if (isOnAuthPage) {
+            // Hide all app-specific controls on Auth page
+            if (newSnippetBtn) newSnippetBtn.classList.add("hidden");
+            if (openVaultBtn) openVaultBtn.classList.add("hidden");
+            if (manageAccountBtn) manageAccountBtn.classList.add("hidden");
+            if (exportBackupBtn) exportBackupBtn.classList.add("hidden");
+            if (syncBtn) syncBtn.classList.add("hidden");
+            if (logoutBtn) logoutBtn.classList.add("hidden");
+        } else {
+            // App-specific controls visible based on login session state
+            if (newSnippetBtn) newSnippetBtn.classList.remove("hidden");
+            if (openVaultBtn) openVaultBtn.classList.remove("hidden");
+
+            if (sessionToken === "guest") {
+                if (manageAccountBtn) manageAccountBtn.classList.add("hidden");
+                if (exportBackupBtn) exportBackupBtn.classList.add("hidden");
+                if (syncBtn) {
+                    syncBtn.classList.remove("hidden");
+                    syncBtn.classList.add("flex");
+                }
+                if (logoutBtn) {
+                    logoutBtn.classList.remove("hidden");
+                    logoutBtn.classList.add("flex");
+                }
+            } else if (sessionToken) {
+                if (manageAccountBtn) manageAccountBtn.classList.remove("hidden");
+                if (exportBackupBtn) exportBackupBtn.classList.remove("hidden");
+                if (syncBtn) syncBtn.classList.add("hidden");
+                if (logoutBtn) {
+                    logoutBtn.classList.remove("hidden");
+                    logoutBtn.classList.add("flex");
+                }
+            } else {
+                if (manageAccountBtn) manageAccountBtn.classList.add("hidden");
+                if (exportBackupBtn) exportBackupBtn.classList.add("hidden");
+                if (syncBtn) syncBtn.classList.add("hidden");
+                if (logoutBtn) logoutBtn.classList.add("hidden");
+            }
+        }
+
+        const menuWidth = 224; // matches w-56
+        const menuHeight = menu.offsetHeight || 220;
+        
+        let targetX = x;
+        let targetY = y;
+
+        if (x + menuWidth > window.innerWidth) {
+            targetX = window.innerWidth - menuWidth - 8;
+        }
+        if (y + menuHeight > window.innerHeight) {
+            targetY = window.innerHeight - menuHeight - 8;
+        }
+
+        menu.style.left = `${targetX}px`;
+        menu.style.top = `${targetY}px`;
+
+        menu.classList.remove("hidden");
+        menu.offsetHeight; // trigger reflow
+        menu.classList.remove("scale-95", "opacity-0");
+        menu.classList.add("scale-100", "opacity-100");
+    }
+
+    function hideCustomContextMenu() {
+        const menu = document.getElementById("custom-context-menu");
+        if (!menu) return;
+        menu.classList.remove("scale-100", "opacity-100");
+        menu.classList.add("scale-95", "opacity-0");
+        setTimeout(() => {
+            menu.classList.add("hidden");
+        }, 150);
+    }
+
+    // Long press detection for mobile touchscreen users
+    let touchTimer = null;
+    let touchX = 0;
+    let touchY = 0;
+
+    document.addEventListener("touchstart", (e) => {
+        if (e.touches.length === 1) {
+            touchX = e.touches[0].clientX;
+            touchY = e.touches[0].clientY;
+            touchTimer = setTimeout(() => {
+                showCustomContextMenu(touchX, touchY);
+            }, 600); // 600ms hold to trigger
+        }
+    }, { passive: true });
+
+    document.addEventListener("touchmove", () => {
+        if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    }, { passive: true });
+
+    document.addEventListener("touchend", () => {
+        if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    }, { passive: true });
+
+    document.addEventListener("touchcancel", () => {
+        if (touchTimer) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+        }
+    }, { passive: true });
+
+    const menuQuickSaveBtn = document.getElementById("menu-quick-save");
+    if (menuQuickSaveBtn) {
+        menuQuickSaveBtn.addEventListener("click", () => {
+            const selectedText = window.getSelection().toString().trim();
+            hideCustomContextMenu();
+            if (selectedText.length > 0) {
+                const snippetTextEl = document.getElementById("snippet-text");
+                if (snippetTextEl) {
+                    if (appContainer && appContainer.classList.contains("hidden")) {
+                        showNotification("Please login or continue as Guest to save snippets.", "warning");
+                        return;
+                    }
+                    showMainView();
+                    snippetTextEl.value = selectedText;
+                    snippetTextEl.scrollIntoView({ behavior: "smooth" });
+                    snippetTextEl.focus();
+                    showNotification("Selection loaded! Click 'Save Snippet' to store.", "success");
+                }
+            }
+        });
+    }
+
+    const menuNewSnippetBtn = document.getElementById("menu-new-snippet");
+    if (menuNewSnippetBtn) {
+        menuNewSnippetBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            if (appContainer && appContainer.classList.contains("hidden")) {
+                showNotification("Please login or continue as Guest to access the vault.", "warning");
+                return;
+            }
+            showMainView();
+            const snippetTextEl = document.getElementById("snippet-text");
+            if (snippetTextEl) {
+                snippetTextEl.value = "";
+                snippetTextEl.scrollIntoView({ behavior: "smooth" });
+                snippetTextEl.focus();
+            }
+        });
+    }
+
+    const menuOpenVaultBtn = document.getElementById("menu-open-vault");
+    if (menuOpenVaultBtn) {
+        menuOpenVaultBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            if (appContainer && appContainer.classList.contains("hidden")) {
+                showNotification("Please login or continue as Guest to access the vault.", "warning");
+                return;
+            }
+            showMainView();
+        });
+    }
+
+    const menuManageAccountBtn = document.getElementById("menu-manage-account");
+    if (menuManageAccountBtn) {
+        menuManageAccountBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            if (sessionToken === "guest") {
+                showNotification("Account Settings are not available in Guest mode.", "warning");
+                return;
+            }
+            showAccountView();
+        });
+    }
+
+    const menuExportBackupBtn = document.getElementById("menu-export-backup");
+    if (menuExportBackupBtn) {
+        menuExportBackupBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            const downloadBtn = document.getElementById("download-data-btn");
+            if (downloadBtn) {
+                downloadBtn.click();
+            } else {
+                showNotification("Export not available.", "error");
+            }
+        });
+    }
+
+    const menuSyncBtn = document.getElementById("menu-sync");
+    if (menuSyncBtn) {
+        menuSyncBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            const guestSyncBtn = document.getElementById("guest-sync-btn");
+            if (guestSyncBtn) {
+                guestSyncBtn.click();
+            } else {
+                showNotification("Sync options not available.", "error");
+            }
+        });
+    }
+
+    const menuLogoutBtn = document.getElementById("menu-logout");
+    if (menuLogoutBtn) {
+        menuLogoutBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            const logoutBtn = document.getElementById("logout-btn");
+            if (logoutBtn) {
+                logoutBtn.click();
+            } else {
+                showNotification("Logout not available.", "error");
+            }
+        });
+    }
+
+    const menuAboutBtn = document.getElementById("menu-about");
+    if (menuAboutBtn) {
+        menuAboutBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            localStorage.setItem("snipvault_skip_intro", "true");
+            window.location.href = "about.html";
+        });
+    }
+
+    const menuPricingBtn = document.getElementById("menu-pricing");
+    if (menuPricingBtn) {
+        menuPricingBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            localStorage.setItem("snipvault_skip_intro", "true");
+            window.location.href = "pricing.html";
+        });
+    }
+
+    const menuOpensourceBtn = document.getElementById("menu-opensource");
+    if (menuOpensourceBtn) {
+        menuOpensourceBtn.addEventListener("click", () => {
+            hideCustomContextMenu();
+            localStorage.setItem("snipvault_skip_intro", "true");
+            window.location.href = "opensource.html";
+        });
+    }
 
     // --- Initial Load ---
     setFooterYear();
