@@ -604,29 +604,49 @@ document.addEventListener('DOMContentLoaded', () => {
             showAppView(); 
         });
     } else if (sessionToken) {
-        convexClient.query("auth:getUser", { token: sessionToken })
-            .then(user => {
-                if (user) {
-                    currentUser = user;
-                    loadUserCategories(); 
-                    loadUserSnippets();   
-                    playIntroAnimation(() => { 
-                        showAppView(); 
-                    });
-                } else {
+        if (!navigator.onLine) {
+            console.log("Offline mode detected, bypassing authentication query.");
+            const cachedUser = localStorage.getItem('snipvault_cached_user');
+            if (cachedUser) {
+                try {
+                    currentUser = JSON.parse(cachedUser);
+                } catch (e) {
+                    currentUser = { name: "Offline User", email: "Cached Session" };
+                }
+            } else {
+                currentUser = { name: "Offline User", email: "Cached Session" };
+            }
+            loadUserCategories(); 
+            loadUserSnippets();   
+            playIntroAnimation(() => { 
+                showAppView(); 
+            });
+        } else {
+            convexClient.query("auth:getUser", { token: sessionToken })
+                .then(user => {
+                    if (user) {
+                        currentUser = user;
+                        localStorage.setItem('snipvault_cached_user', JSON.stringify(user));
+                        loadUserCategories(); 
+                        loadUserSnippets();   
+                        playIntroAnimation(() => { 
+                            showAppView(); 
+                        });
+                    } else {
+                        localStorage.removeItem('snipvault_session_token');
+                        sessionToken = null;
+                        currentUser = null;
+                        showAuthView();
+                    }
+                })
+                .catch(error => {
+                    console.error("Authentication check failed:", error);
                     localStorage.removeItem('snipvault_session_token');
                     sessionToken = null;
                     currentUser = null;
                     showAuthView();
-                }
-            })
-            .catch(error => {
-                console.error("Authentication check failed:", error);
-                localStorage.removeItem('snipvault_session_token');
-                sessionToken = null;
-                currentUser = null;
-                showAuthView();
-            });
+                });
+        }
     } else {
         showAuthView();
     }
@@ -1387,11 +1407,26 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Load from local storage cache immediately for offline / instant load support
+        const cached = localStorage.getItem(`snipvault_cached_categories_${sessionToken}`);
+        if (cached) {
+            try {
+                localCategoriesCache = JSON.parse(cached);
+                populateCategoryDropdown(snippetCategoryEl, localCategoriesCache);
+                populateCategoryDropdown(filterCategoryEl, localCategoriesCache);
+            } catch(e) {}
+        }
+
+        if (!navigator.onLine) {
+            return; // Don't try to connect to Convex if offline
+        }
+
         // Standard Convex Categories
         if (categoriesUnsubscribe) categoriesUnsubscribe(); 
 
         categoriesUnsubscribe = convexClient.onUpdate("categories:list", { token: sessionToken }, (categoriesList) => {
             localCategoriesCache = categoriesList;
+            localStorage.setItem(`snipvault_cached_categories_${sessionToken}`, JSON.stringify(categoriesList));
             populateCategoryDropdown(snippetCategoryEl, localCategoriesCache);
             populateCategoryDropdown(filterCategoryEl, localCategoriesCache);
             
@@ -1475,11 +1510,53 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Load from local storage cache immediately for offline support
+        const cached = localStorage.getItem(`snipvault_cached_snippets_${sessionToken}`);
+        if (cached) {
+            try {
+                localSnippetsCache = JSON.parse(cached).map(doc => ({ id: doc._id, ...doc }));
+                renderSnippets();
+            } catch(e) {}
+        }
+
+        if (!navigator.onLine) {
+            // Include offline snippets that are pending sync so they show up in the list!
+            getOfflineSnippets().then(offlineSnippets => {
+                const userOffline = offlineSnippets.filter(s => s.token === sessionToken);
+                if (userOffline.length > 0) {
+                    const merged = [...userOffline.map(s => ({ ...s, _id: s.id, id: s.id, isOfflinePending: true })), ...localSnippetsCache];
+                    // De-duplicate in case they are already there
+                    const seen = new Set();
+                    localSnippetsCache = merged.filter(item => {
+                        const duplicate = seen.has(item.id);
+                        seen.add(item.id);
+                        return !duplicate;
+                    });
+                    renderSnippets();
+                }
+            });
+            return;
+        }
+
         // Standard Convex Snippets
         if (snippetsUnsubscribe) snippetsUnsubscribe(); 
 
-        snippetsUnsubscribe = convexClient.onUpdate("snippets:list", { token: sessionToken }, (snippetsList) => {
-            localSnippetsCache = snippetsList.map(doc => ({ id: doc._id, ...doc }));
+        snippetsUnsubscribe = convexClient.onUpdate("snippets:list", { token: sessionToken }, async (snippetsList) => {
+            // Save to local cache
+            localStorage.setItem(`snipvault_cached_snippets_${sessionToken}`, JSON.stringify(snippetsList));
+            
+            // Get any pending offline snippets so we can display them together with the cloud snippets!
+            const offlineSnippets = await getOfflineSnippets();
+            const userOffline = offlineSnippets.filter(s => s.token === sessionToken);
+            
+            const mergedList = [...userOffline.map(s => ({ ...s, _id: s.id, id: s.id, isOfflinePending: true })), ...snippetsList];
+            
+            const seen = new Set();
+            localSnippetsCache = mergedList.map(doc => ({ id: doc._id || doc.id, ...doc })).filter(item => {
+                const duplicate = seen.has(item.id);
+                seen.add(item.id);
+                return !duplicate;
+            });
             renderSnippets(); 
         }, error => {
             console.error("Error loading snippets: ", error);
@@ -1524,11 +1601,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const headerDiv = document.createElement('div');
             headerDiv.className = 'snippet-header';
             const titleCategoryDiv = document.createElement('div');
-            titleCategoryDiv.className = 'snippet-title-category';
+            titleCategoryDiv.className = 'snippet-title-category flex items-center';
             const categoryTag = document.createElement('span');
             categoryTag.className = 'snippet-category-tag';
             categoryTag.textContent = snippet.category || 'General';
             titleCategoryDiv.appendChild(categoryTag);
+            if (snippet.isOfflinePending) {
+                const pendingBadge = document.createElement('span');
+                pendingBadge.className = 'bg-yellow-100 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1.5 flex items-center gap-1';
+                pendingBadge.innerHTML = `<i class="fas fa-clock text-[8px] animate-pulse"></i> Offline Pending`;
+                titleCategoryDiv.appendChild(pendingBadge);
+            }
             headerDiv.appendChild(titleCategoryDiv);
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'snippet-actions';
@@ -1617,7 +1700,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Standard Convex Insertion with Offline Fallback
         if (!navigator.onLine) {
             try {
+                const tempId = Date.now();
                 const newSnippet = {
+                    id: tempId,
                     text,
                     url: url || undefined,
                     category,
@@ -1628,7 +1713,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 await saveOfflineSnippet(newSnippet);
 
                 // Add to local UI cache so it renders immediately
-                const tempId = `offline_temp_${Date.now()}`;
                 const uiSnippet = {
                     id: tempId,
                     text,
@@ -1673,7 +1757,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("Error saving snippet (falling back to local DB): ", error);
             try {
+                const tempId = Date.now();
                 const newSnippet = {
+                    id: tempId,
                     text,
                     url: url || undefined,
                     category,
@@ -1683,7 +1769,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 };
                 await saveOfflineSnippet(newSnippet);
 
-                const tempId = `offline_temp_${Date.now()}`;
                 const uiSnippet = {
                     id: tempId,
                     text,
@@ -1772,6 +1857,25 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         if (confirm('Are you sure you want to permanently delete this snippet?')) {
+            // Check if it is an offline-pending snippet (which has a numeric/Date.now() ID)
+            const isOfflineSnippet = typeof snippetId === 'number' || !isNaN(snippetId);
+            if (isOfflineSnippet) {
+                try {
+                    await deleteOfflineSnippet(Number(snippetId));
+                    showNotification('Offline pending snippet removed.', 'info');
+                    localSnippetsCache = localSnippetsCache.filter(s => s.id !== snippetId);
+                    renderSnippets();
+                    if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
+                        showMainView(); 
+                    }
+                    return;
+                } catch(err) {
+                    console.error("Error deleting offline snippet:", err);
+                    showNotification('Failed to remove offline snippet.', 'error');
+                    return;
+                }
+            }
+
             // Guest Mode Delete
             if (sessionToken === "guest") {
                 let stored = localStorage.getItem("snipvault_guest_snippets");
