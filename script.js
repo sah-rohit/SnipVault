@@ -10,6 +10,15 @@ document.addEventListener('DOMContentLoaded', () => {
         return; // Prevent initialization
     }
 
+    // --- PWA Service Worker Registration ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered successfully:', reg.scope))
+                .catch(err => console.error('Service Worker registration failed:', err));
+        });
+    }
+
     // Initialize Convex Client
     let convexClient;
     try {
@@ -30,6 +39,189 @@ document.addEventListener('DOMContentLoaded', () => {
     let sessionToken = localStorage.getItem('snipvault_session_token');
     let snippetsUnsubscribe = null; 
     let categoriesUnsubscribe = null; 
+
+    // --- IndexedDB Configuration for Offline Snippets ---
+    const DB_NAME = 'SnipVaultOfflineDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'offline_snippets';
+
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains(STORE_NAME)) {
+                    db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
+                }
+            };
+            request.onsuccess = (e) => resolve(e.target.result);
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    async function saveOfflineSnippet(snippet) {
+        try {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.add(snippet);
+                request.onsuccess = () => resolve();
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (err) {
+            console.error('Failed to open IndexedDB:', err);
+        }
+    }
+
+    async function getOfflineSnippets() {
+        try {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readonly');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.getAll();
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (err) {
+            console.error('Failed to get snippets from IndexedDB:', err);
+            return [];
+        }
+    }
+
+    async function deleteOfflineSnippet(id) {
+        try {
+            const db = await openDB();
+            return new Promise((resolve, reject) => {
+                const tx = db.transaction(STORE_NAME, 'readwrite');
+                const store = tx.objectStore(STORE_NAME);
+                const request = store.delete(id);
+                request.onsuccess = () => resolve();
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (err) {
+            console.error('Failed to delete from IndexedDB:', err);
+        }
+    }
+
+    // --- Offline UX Banner Animation Controls ---
+    function showOfflineBanner(text = "Sync Paused - Offline Mode", isSyncing = false) {
+        const banner = document.getElementById('offline-sync-banner');
+        const bannerText = document.getElementById('offline-sync-text');
+        if (!banner || !bannerText) return;
+        
+        bannerText.textContent = text;
+        
+        const indicatorDot = banner.querySelector('.relative.inline-flex.rounded-full');
+        const pingDot = banner.querySelector('.animate-ping');
+        const icon = banner.querySelector('i');
+        
+        if (isSyncing) {
+            banner.className = banner.className.replace('text-yellow-800', 'text-indigo-800').replace('border-yellow-200', 'border-indigo-200');
+            if (indicatorDot) {
+                indicatorDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500";
+            }
+            if (pingDot) {
+                pingDot.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75";
+            }
+            if (icon) {
+                icon.className = "fas fa-spinner animate-spin text-indigo-600";
+            }
+        } else {
+            banner.className = banner.className.replace('text-indigo-800', 'text-yellow-800').replace('border-indigo-200', 'border-yellow-200');
+            if (indicatorDot) {
+                indicatorDot.className = "relative inline-flex rounded-full h-2.5 w-2.5 bg-yellow-500";
+            }
+            if (pingDot) {
+                pingDot.className = "animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75";
+            }
+            if (icon) {
+                icon.className = "fas fa-wifi-slash text-yellow-600";
+            }
+        }
+
+        banner.classList.remove('hidden');
+        setTimeout(() => {
+            banner.classList.remove('-translate-y-10', 'opacity-0');
+            banner.classList.add('translate-y-0', 'opacity-100');
+        }, 10);
+    }
+
+    function hideOfflineBanner() {
+        const banner = document.getElementById('offline-sync-banner');
+        if (!banner) return;
+        banner.classList.remove('translate-y-0', 'opacity-100');
+        banner.classList.add('-translate-y-10', 'opacity-0');
+        setTimeout(() => {
+            banner.classList.add('hidden');
+        }, 300);
+    }
+
+    let isSyncingOfflineData = false;
+
+    async function syncOfflineSnippets() {
+        if (isSyncingOfflineData) return;
+        if (!navigator.onLine) {
+            showOfflineBanner();
+            return;
+        }
+
+        // Must have valid sessionToken and NOT be in guest mode to sync to cloud
+        if (!sessionToken || sessionToken === "guest") {
+            hideOfflineBanner();
+            return;
+        }
+
+        const offlineSnippets = await getOfflineSnippets();
+        const userOfflineSnippets = offlineSnippets.filter(s => s.token === sessionToken);
+
+        if (userOfflineSnippets.length === 0) {
+            hideOfflineBanner();
+            return;
+        }
+
+        isSyncingOfflineData = true;
+        showOfflineBanner(`Syncing ${userOfflineSnippets.length} offline snippet(s)...`, true);
+
+        try {
+            for (const snip of userOfflineSnippets) {
+                await convexClient.mutation("snippets:create", {
+                    token: snip.token,
+                    text: snip.text,
+                    url: snip.url || undefined,
+                    category: snip.category || "General",
+                    note: snip.note || undefined
+                });
+                await deleteOfflineSnippet(snip.id);
+            }
+            showNotification(`Synced ${userOfflineSnippets.length} snippet(s) to cloud successfully!`, 'success');
+            loadUserSnippets();
+        } catch (err) {
+            console.error("Sync failed:", err);
+            showNotification("Sync failed. Snippets are securely saved locally.", "error");
+        } finally {
+            isSyncingOfflineData = false;
+            hideOfflineBanner();
+        }
+    }
+
+    window.addEventListener('online', () => {
+        showNotification("Connection restored! Syncing data...", "info");
+        syncOfflineSnippets();
+    });
+
+    window.addEventListener('offline', () => {
+        showNotification("You are offline. Snippets will be saved locally.", "warning");
+        showOfflineBanner();
+    });
+
+    // Initial check
+    if (!navigator.onLine) {
+        setTimeout(showOfflineBanner, 1000);
+    } else {
+        setTimeout(syncOfflineSnippets, 2000);
+    } 
 
 
     // --- DOM Elements ---
@@ -162,7 +354,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const migratePasswordLabel = document.getElementById('migrate-password-label');
     const migrateSubmitBtn = document.getElementById('migrate-submit-btn');
     const closeMigrateBtn = document.getElementById('close-migrate-btn');
-
     let currentEditingSnippetId = null;
     let localSnippetsCache = []; 
     let localCategoriesCache = []; 
@@ -401,7 +592,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         loadSessionsLog();
     }
-    
+
+
     // --- Session Setup / Initialization ---
     if (localStorage.getItem("snipvault_guest_mode") === "true") {
         sessionToken = "guest";
@@ -541,7 +733,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 300);
         });
     }
-
     if (forgotPasswordForm) {
         forgotPasswordForm.addEventListener("submit", (e) => {
             e.preventDefault();
@@ -1423,7 +1614,48 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // Standard Convex Insertion
+        // Standard Convex Insertion with Offline Fallback
+        if (!navigator.onLine) {
+            try {
+                const newSnippet = {
+                    text,
+                    url: url || undefined,
+                    category,
+                    note: note || undefined,
+                    createdAt: Date.now(),
+                    token: sessionToken
+                };
+                await saveOfflineSnippet(newSnippet);
+
+                // Add to local UI cache so it renders immediately
+                const tempId = `offline_temp_${Date.now()}`;
+                const uiSnippet = {
+                    id: tempId,
+                    text,
+                    url: url || undefined,
+                    category,
+                    note: note || undefined,
+                    createdAt: newSnippet.createdAt,
+                    _id: tempId
+                };
+                localSnippetsCache.unshift(uiSnippet);
+                renderSnippets(true);
+
+                if(snippetTextEl) snippetTextEl.value = ''; 
+                if(snippetUrlEl) snippetUrlEl.value = ''; 
+                if(snippetNoteEl) snippetNoteEl.value = ''; 
+                if(snippetCategoryEl) snippetCategoryEl.value = "General"; 
+                if(snippetTextEl) snippetTextEl.focus();
+
+                showOfflineBanner();
+                showNotification('Snippet saved locally (Offline mode). Will sync when online.', 'success');
+            } catch (err) {
+                console.error("IndexedDB error:", err);
+                showNotification('Failed to save snippet locally.', 'error');
+            }
+            return;
+        }
+
         try {
             await convexClient.mutation("snippets:create", {
                 token: sessionToken,
@@ -1439,8 +1671,43 @@ document.addEventListener('DOMContentLoaded', () => {
             if(snippetTextEl) snippetTextEl.focus();
             showNotification('Snippet saved successfully!', 'success');
         } catch (error) {
-            console.error("Error saving snippet: ", error);
-            showNotification('Failed to save snippet.', 'error');
+            console.error("Error saving snippet (falling back to local DB): ", error);
+            try {
+                const newSnippet = {
+                    text,
+                    url: url || undefined,
+                    category,
+                    note: note || undefined,
+                    createdAt: Date.now(),
+                    token: sessionToken
+                };
+                await saveOfflineSnippet(newSnippet);
+
+                const tempId = `offline_temp_${Date.now()}`;
+                const uiSnippet = {
+                    id: tempId,
+                    text,
+                    url: url || undefined,
+                    category,
+                    note: note || undefined,
+                    createdAt: newSnippet.createdAt,
+                    _id: tempId
+                };
+                localSnippetsCache.unshift(uiSnippet);
+                renderSnippets(true);
+
+                if(snippetTextEl) snippetTextEl.value = ''; 
+                if(snippetUrlEl) snippetUrlEl.value = ''; 
+                if(snippetNoteEl) snippetNoteEl.value = ''; 
+                if(snippetCategoryEl) snippetCategoryEl.value = "General"; 
+                if(snippetTextEl) snippetTextEl.focus();
+
+                showOfflineBanner();
+                showNotification('Snippet saved locally (Offline sync pending).', 'success');
+            } catch (err) {
+                console.error("IndexedDB fallback error:", err);
+                showNotification('Failed to save snippet.', 'error');
+            }
         }
     }
     

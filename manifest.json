@@ -1,0 +1,24 @@
+{
+  "name": "SnipVault - Your Contextual Snippet Sanctuary",
+  "short_name": "SnipVault",
+  "description": "Securely save, sync, and organize your ideas, links, and code snippets, online or offline.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#4f46e5",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
