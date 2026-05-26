@@ -215,10 +215,11 @@ input:focus, textarea:focus, select:focus { outline: none; }
 
 /* Blueprint/Grid backdrop overlay for body */
 body {
+  background-color: #f1f5f9 !important; /* solid stable slate-100 grey */
   background-image: 
-    linear-gradient(rgba(99, 102, 241, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
-  background-size: 20px 20px;
+    linear-gradient(rgba(100, 116, 139, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(100, 116, 139, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
   background-attachment: fixed;
 }
 

@@ -28,7 +28,9 @@ export async function getUserIdFromToken(db: any, token: string | undefined): Pr
   
   if (!session) return null;
   if (Date.now() > session.expiresAt) {
-    await db.delete(session._id);
+    if (typeof db.delete === "function") {
+      await db.delete(session._id);
+    }
     return null;
   }
   return session.userId;

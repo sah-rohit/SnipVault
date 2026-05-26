@@ -40,6 +40,8 @@ export default defineSchema({
     category: v.string(),
     note: v.optional(v.string()),
     createdAt: v.number(),
+    isDeleted: v.optional(v.boolean()),
+    deletedAt: v.optional(v.number()),
   }).index("by_user", ["userId"]),
 
   verificationTokens: defineTable({

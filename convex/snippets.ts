@@ -10,11 +10,33 @@ export const list = query({
     const userId = await getUserIdFromToken(ctx.db, args.token);
     if (!userId) return [];
 
-    return await ctx.db
+    const snippets = await ctx.db
       .query("snippets")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .order("desc") // Order by creation timestamp descending (matches index structure)
+      .order("desc")
       .collect();
+
+    // Filter out soft-deleted snippets
+    return snippets.filter(s => !s.isDeleted);
+  },
+});
+
+export const listTrash = query({
+  args: {
+    token: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx.db, args.token);
+    if (!userId) return [];
+
+    const snippets = await ctx.db
+      .query("snippets")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .order("desc")
+      .collect();
+
+    // Filter to only return soft-deleted snippets
+    return snippets.filter(s => s.isDeleted === true);
   },
 });
 
@@ -84,7 +106,56 @@ export const update = mutation({
   },
 });
 
+// deleteSnippet now acts as soft delete (moving to Trash Pile)
 export const deleteSnippet = mutation({
+  args: {
+    token: v.string(),
+    id: v.id("snippets"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx.db, args.token);
+    if (!userId) {
+      throw new Error("Unauthenticated request.");
+    }
+
+    const snippet = await ctx.db.get(args.id);
+    if (!snippet || snippet.userId !== userId) {
+      throw new Error("Snippet not found or unauthorized access.");
+    }
+
+    await ctx.db.patch(args.id, {
+      isDeleted: true,
+      deletedAt: Date.now(),
+    });
+    return { success: true };
+  },
+});
+
+export const restoreSnippet = mutation({
+  args: {
+    token: v.string(),
+    id: v.id("snippets"),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx.db, args.token);
+    if (!userId) {
+      throw new Error("Unauthenticated request.");
+    }
+
+    const snippet = await ctx.db.get(args.id);
+    if (!snippet || snippet.userId !== userId) {
+      throw new Error("Snippet not found or unauthorized access.");
+    }
+
+    await ctx.db.patch(args.id, {
+      isDeleted: false,
+      deletedAt: 0,
+    });
+    return { success: true };
+  },
+});
+
+export const deleteSnippetPermanently = mutation({
   args: {
     token: v.string(),
     id: v.id("snippets"),
@@ -102,5 +173,74 @@ export const deleteSnippet = mutation({
 
     await ctx.db.delete(args.id);
     return { success: true };
+  },
+});
+
+export const cleanExpiredTrash = mutation({
+  args: {
+    token: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx.db, args.token);
+    if (!userId) return { count: 0 };
+
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const allSnippets = await ctx.db
+      .query("snippets")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    let count = 0;
+    for (const s of allSnippets) {
+      if (s.isDeleted === true && s.deletedAt && s.deletedAt < sevenDaysAgo) {
+        await ctx.db.delete(s._id);
+        count++;
+      }
+    }
+    return { count };
+  },
+});
+
+export const restoreAllSnippets = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx.db, args.token);
+    if (!userId) throw new Error("Unauthenticated request.");
+
+    const snippets = await ctx.db
+      .query("snippets")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    let count = 0;
+    for (const s of snippets) {
+      if (s.isDeleted) {
+        await ctx.db.patch(s._id, { isDeleted: false, deletedAt: 0 });
+        count++;
+      }
+    }
+    return { count };
+  },
+});
+
+export const emptyTrashPermanently = mutation({
+  args: { token: v.string() },
+  handler: async (ctx, args) => {
+    const userId = await getUserIdFromToken(ctx.db, args.token);
+    if (!userId) throw new Error("Unauthenticated request.");
+
+    const snippets = await ctx.db
+      .query("snippets")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect();
+
+    let count = 0;
+    for (const s of snippets) {
+      if (s.isDeleted) {
+        await ctx.db.delete(s._id);
+        count++;
+      }
+    }
+    return { count };
   },
 });

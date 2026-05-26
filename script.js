@@ -266,6 +266,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const appContainer = document.getElementById('app-container'); 
     const headerLogoSVG = document.getElementById('header-logo-svg');
 
+    const landingViewEl = document.getElementById('landing-view');
+    const landingLaunchBtn = document.getElementById('landing-launch-btn');
+    const landingGuestBtn = document.getElementById('landing-guest-btn');
+
     const authViewEl = document.getElementById('auth-view');
     const loginFormContainerEl = document.getElementById('login-form-container'); 
     const signupFormContainerEl = document.getElementById('signup-form-container'); 
@@ -376,6 +380,8 @@ const migrateNameEl = document.getElementById('migrate-name');
     let currentEditingSnippetId = null;
     let localSnippetsCache = []; 
     let localCategoriesCache = []; 
+    let trashUnsubscribe = null;
+    let localTrashCache = [];
     const defaultCategoryNames = ["General", "Code Snippets", "Recipes", "Bookmarks", "Ideas", "Learning"];
     
     // Canvas Crop Variables
@@ -501,6 +507,15 @@ const migrateNameEl = document.getElementById('migrate-name');
             if(detailTitleEl) detailTitleEl.textContent = "Snippet Details";
             if(detailCategoryViewEl) detailCategoryViewEl.textContent = snippet.category;
             if(detailTextViewEl) detailTextViewEl.innerHTML = snippet.text;
+            
+            // Hide edit button if snippet is soft-deleted
+            if (editSnippetFromViewBtn) {
+                if (snippet.isDeleted) {
+                    editSnippetFromViewBtn.classList.add('hidden');
+                } else {
+                    editSnippetFromViewBtn.classList.remove('hidden');
+                }
+            }
             
             if (snippet.url) {
                 if(detailUrlViewEl) {
@@ -696,6 +711,36 @@ const migrateNameEl = document.getElementById('migrate-name');
             });
     }
 
+    function showLandingPageView() {
+        if (landingViewEl) landingViewEl.classList.remove('hidden');
+        if (authViewEl) authViewEl.classList.add('hidden');
+        if (appContainer) {
+            appContainer.classList.add('hidden');
+            appContainer.classList.add('hidden-for-auth');
+        }
+        if (introOverlay) {
+            introOverlay.style.display = 'none';
+        }
+    }
+
+    if (landingLaunchBtn) {
+        landingLaunchBtn.addEventListener('click', () => {
+            if (landingViewEl) landingViewEl.classList.add('hidden');
+            showAuthView();
+        });
+    }
+
+    if (landingGuestBtn) {
+        landingGuestBtn.addEventListener('click', () => {
+            const guestLoginBtn = document.getElementById('guest-login-btn');
+            if (guestLoginBtn) {
+                if (landingViewEl) landingViewEl.classList.add('hidden');
+                showAuthView();
+                guestLoginBtn.click();
+            }
+        });
+    }
+
     // --- Session Setup / Initialization ---
     if (localStorage.getItem("snipvault_guest_mode") === "true") {
         sessionToken = "guest";
@@ -738,7 +783,7 @@ const migrateNameEl = document.getElementById('migrate-name');
                         localStorage.removeItem('snipvault_session_token');
                         sessionToken = null;
                         currentUser = null;
-                        showAuthView();
+                        showLandingPageView();
                     }
                 })
                 .catch(error => {
@@ -746,11 +791,11 @@ const migrateNameEl = document.getElementById('migrate-name');
                     localStorage.removeItem('snipvault_session_token');
                     sessionToken = null;
                     currentUser = null;
-                    showAuthView();
+                    showLandingPageView();
                 });
         }
     } else {
-        showAuthView();
+        showLandingPageView();
     }
 
     // --- Sign In & Sign Up Form Events ---
@@ -1938,6 +1983,8 @@ const migrateNameEl = document.getElementById('migrate-name');
     }
 
     // --- Snippet Management (Convex + LocalStorage) ---
+    let currentSnippetsTab = 'active'; // 'active' or 'trash'
+
     function loadUserSnippets() {
         if (!sessionToken) return;
 
@@ -1952,51 +1999,88 @@ const migrateNameEl = document.getElementById('migrate-name');
                     snippetsList = [];
                 }
             }
-            localSnippetsCache = snippetsList.map(doc => ({ id: doc._id, ...doc }));
+            
+            // Clean up guest trash older than 7 days
+            const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+            const initialLen = snippetsList.length;
+            snippetsList = snippetsList.filter(s => !(s.isDeleted === true && s.deletedAt && s.deletedAt < sevenDaysAgo));
+            if (snippetsList.length !== initialLen) {
+                localStorage.setItem("snipvault_guest_snippets", JSON.stringify(snippetsList));
+            }
+
+            // Filter based on tab
+            let listFiltered = [];
+            if (currentSnippetsTab === 'active') {
+                listFiltered = snippetsList.filter(s => !s.isDeleted);
+            } else {
+                listFiltered = snippetsList.filter(s => s.isDeleted === true);
+            }
+
+            localSnippetsCache = listFiltered.map(doc => ({ id: doc._id, ...doc }));
             renderSnippets();
             return;
         }
 
-        // Load from local storage cache immediately for offline support
-        const cached = localStorage.getItem(`snipvault_cached_snippets_${sessionToken}`);
-        if (cached) {
-            try {
-                localSnippetsCache = JSON.parse(cached).map(doc => ({ id: doc._id, ...doc }));
-                renderSnippets();
-            } catch(e) {}
-        }
-
-        if (!navigator.onLine) {
-            // Include offline snippets that are pending sync so they show up in the list!
-            getOfflineSnippets().then(offlineSnippets => {
-                const userOffline = offlineSnippets.filter(s => s.token === sessionToken);
-                if (userOffline.length > 0) {
-                    const merged = [...userOffline.map(s => ({ ...s, _id: s.id, id: s.id, isOfflinePending: true })), ...localSnippetsCache];
-                    // De-duplicate in case they are already there
-                    const seen = new Set();
-                    localSnippetsCache = merged.filter(item => {
-                        const duplicate = seen.has(item.id);
-                        seen.add(item.id);
-                        return !duplicate;
-                    });
-                    renderSnippets();
-                }
-            });
-            return;
+        // Clean expired cloud trash in background
+        if (navigator.onLine) {
+            convexClient.mutation("snippets:cleanExpiredTrash", { token: sessionToken }).catch(e => {});
         }
 
         // Standard Convex Snippets
         if (snippetsUnsubscribe) snippetsUnsubscribe(); 
 
-        snippetsUnsubscribe = convexClient.onUpdate("snippets:list", { token: sessionToken }, async (snippetsList) => {
-            // Save to local cache
-            localStorage.setItem(`snipvault_cached_snippets_${sessionToken}`, JSON.stringify(snippetsList));
+        const queryName = currentSnippetsTab === 'active' ? "snippets:list" : "snippets:listTrash";
+        const tabAtRequest = currentSnippetsTab; // Capture current tab to prevent race conditions
+
+        // Load from local storage cache immediately for offline support (only for active tab cache)
+        if (currentSnippetsTab === 'active') {
+            const cached = localStorage.getItem(`snipvault_cached_snippets_${sessionToken}`);
+            if (cached) {
+                try {
+                    localSnippetsCache = JSON.parse(cached).map(doc => ({ id: doc._id, ...doc }));
+                    renderSnippets();
+                } catch(e) {}
+            }
+        } else {
+            localSnippetsCache = [];
+        }
+
+        if (!navigator.onLine) {
+            if (currentSnippetsTab === 'active') {
+                getOfflineSnippets().then(offlineSnippets => {
+                    if (currentSnippetsTab !== tabAtRequest) return; // Guard
+                    const userOffline = offlineSnippets.filter(s => s.token === sessionToken);
+                    if (userOffline.length > 0) {
+                        const merged = [...userOffline.map(s => ({ ...s, _id: s.id, id: s.id, isOfflinePending: true })), ...localSnippetsCache];
+                        const seen = new Set();
+                        localSnippetsCache = merged.filter(item => {
+                            const duplicate = seen.has(item.id);
+                            seen.add(item.id);
+                            return !duplicate;
+                        });
+                        renderSnippets();
+                    }
+                });
+            }
+            return;
+        }
+
+        snippetsUnsubscribe = convexClient.onUpdate(queryName, { token: sessionToken }, async (snippetsList) => {
+            if (currentSnippetsTab !== tabAtRequest) return; // Guard immediately on update
             
-            // Get any pending offline snippets so we can display them together with the cloud snippets!
+            if (currentSnippetsTab === 'active') {
+                localStorage.setItem(`snipvault_cached_snippets_${sessionToken}`, JSON.stringify(snippetsList));
+            }
+            
             const offlineSnippets = await getOfflineSnippets();
+            if (currentSnippetsTab !== tabAtRequest) return; // Guard after asynchronous retrieval
+            
             const userOffline = offlineSnippets.filter(s => s.token === sessionToken);
             
-            const mergedList = [...userOffline.map(s => ({ ...s, _id: s.id, id: s.id, isOfflinePending: true })), ...snippetsList];
+            // Only merge offline pending snippets on the active tab (as offline pending are not in trash)
+            const mergedList = currentSnippetsTab === 'active'
+                ? [...userOffline.map(s => ({ ...s, _id: s.id, id: s.id, isOfflinePending: true })), ...snippetsList]
+                : snippetsList;
             
             const seen = new Set();
             localSnippetsCache = mergedList.map(doc => ({ id: doc._id || doc.id, ...doc })).filter(item => {
@@ -2006,8 +2090,249 @@ const migrateNameEl = document.getElementById('migrate-name');
             });
             renderSnippets(); 
         }, error => {
+            if (currentSnippetsTab !== tabAtRequest) return; // Guard on error
             console.error("Error loading snippets: ", error);
             showNotification("Failed to load snippets.", "error");
+        });
+    }
+
+    function loadTrashSnippets() {
+        if (!sessionToken) return;
+
+        // Guest Mode
+        if (sessionToken === "guest") {
+            let stored = localStorage.getItem("snipvault_guest_snippets");
+            let snippetsList = [];
+            if (stored) {
+                try {
+                    snippetsList = JSON.parse(stored);
+                } catch(e) {
+                    snippetsList = [];
+                }
+            }
+            localTrashCache = snippetsList.filter(s => s.isDeleted === true).map(doc => ({ id: doc._id, ...doc }));
+            renderTrashSnippets();
+            return;
+        }
+
+        // Standard Convex mode
+        if (trashUnsubscribe) trashUnsubscribe();
+
+        trashUnsubscribe = convexClient.onUpdate("snippets:listTrash", { token: sessionToken }, async (snippetsList) => {
+            localTrashCache = snippetsList.map(doc => ({ id: doc._id || doc.id, ...doc }));
+            renderTrashSnippets();
+        }, error => {
+            console.error("Error loading trash snippets: ", error);
+            showNotification("Failed to load trash snippets.", "error");
+        });
+    }
+
+    function renderTrashSnippets() {
+        const trashSnippetsListEl = document.getElementById("trash-snippets-list");
+        if (!trashSnippetsListEl) return;
+
+        trashSnippetsListEl.innerHTML = "";
+        
+        const trashHealthBarEl = document.getElementById("trash-health-bar");
+        const trashHealthTextEl = document.getElementById("trash-health-text");
+
+        if (localTrashCache.length === 0) {
+            trashSnippetsListEl.innerHTML = `
+                <div class="text-center py-12 text-gray-400 font-mono text-xs">
+                    <i class="fas fa-shield-alt fa-3x mb-3 text-green-400"></i>
+                    <p>Trash Sanctuary is clean and safe.</p>
+                </div>
+            `;
+            if (trashHealthBarEl) {
+                trashHealthBarEl.style.width = "100%";
+                trashHealthBarEl.className = "h-full bg-green-500 transition-all duration-500";
+            }
+            if (trashHealthTextEl) trashHealthTextEl.textContent = "0 Items (100% Clean)";
+            return;
+        }
+
+        let totalPercent = 0;
+        localTrashCache.forEach((snippet) => {
+            const now = Date.now();
+            const deletedTime = snippet.deletedAt || now;
+            const msRemaining = (7 * 24 * 60 * 60 * 1000) - (now - deletedTime);
+            
+            const hoursRemaining = Math.max(0, Math.ceil(msRemaining / (3600 * 1000)));
+            const daysLeft = Math.floor(hoursRemaining / 24);
+            const hoursLeft = hoursRemaining % 24;
+            
+            const percent = Math.max(0, Math.min(100, (hoursRemaining / (7 * 24)) * 100));
+            totalPercent += percent;
+
+            let countdownText = "";
+            if (daysLeft > 0) {
+                countdownText = `${daysLeft}d ${hoursLeft}h left`;
+            } else {
+                countdownText = `${hoursLeft}h left`;
+            }
+
+            // Expiration bar color
+            let barColorClass = "bg-green-500";
+            let textAlertClass = "text-green-700 bg-green-50 border-green-200";
+            if (percent < 30) {
+                barColorClass = "bg-red-500 animate-pulse";
+                textAlertClass = "text-red-700 bg-red-50 border-red-200 animate-pulse";
+            } else if (percent < 70) {
+                barColorClass = "bg-yellow-500";
+                textAlertClass = "text-yellow-700 bg-yellow-50 border-yellow-200";
+            }
+
+            const card = document.createElement("div");
+            card.className = "bg-white border-2 border-gray-900 p-4 shadow-[4px_4px_0px_0px_#1f2937] transition-all hover:translate-y-[-1px] hover:shadow-[5px_5px_0px_0px_#1f2937] flex flex-col justify-between space-y-3";
+            
+            // Header: Category & Countdown Badge
+            const header = document.createElement("div");
+            header.className = "flex justify-between items-center";
+            header.innerHTML = `
+                <span class="text-[10px] font-mono font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200 px-2 py-0.5">${snippet.category || 'General'}</span>
+                <span class="text-[10px] font-mono font-bold uppercase border px-2 py-0.5 rounded-full ${textAlertClass}">
+                    <i class="fas fa-hourglass-half mr-1"></i>${countdownText}
+                </span>
+            `;
+            card.appendChild(header);
+
+            // Preview Text
+            const preview = document.createElement("div");
+            preview.className = "text-xs text-gray-700 font-sans line-clamp-3 prose max-w-none overflow-hidden break-words";
+            preview.innerHTML = snippet.text;
+            card.appendChild(preview);
+
+            // Expiration Progress Bar
+            const barContainer = document.createElement("div");
+            barContainer.className = "w-full h-1.5 bg-gray-100 border border-gray-900 overflow-hidden";
+            barContainer.innerHTML = `
+                <div class="h-full ${barColorClass} transition-all duration-500" style="width: ${percent}%"></div>
+            `;
+            card.appendChild(barContainer);
+
+            // Actions: Individual Rescue / Vaporize
+            const actions = document.createElement("div");
+            actions.className = "flex justify-end gap-2 border-t pt-2 border-gray-100";
+            
+            const rescueBtn = document.createElement("button");
+            rescueBtn.type = "button";
+            rescueBtn.className = "bg-green-50 border border-gray-900 py-1 px-2.5 text-[10px] font-mono font-bold uppercase hover:bg-green-100 transition-colors cursor-pointer flex items-center gap-1";
+            rescueBtn.innerHTML = `<i class="fas fa-undo"></i> Rescue`;
+            rescueBtn.addEventListener("click", () => handleRestoreSnippet(snippet.id));
+            
+            const wipeBtn = document.createElement("button");
+            wipeBtn.type = "button";
+            wipeBtn.className = "bg-rose-50 border border-gray-900 py-1 px-2.5 text-[10px] font-mono font-bold uppercase hover:bg-rose-100 transition-colors cursor-pointer flex items-center gap-1";
+            wipeBtn.innerHTML = `<i class="fas fa-radiation"></i> Wipe`;
+            wipeBtn.addEventListener("click", () => handleDeleteSnippetPermanently(snippet.id));
+
+            actions.appendChild(rescueBtn);
+            actions.appendChild(wipeBtn);
+            card.appendChild(actions);
+
+            trashSnippetsListEl.appendChild(card);
+        });
+
+        // Update health meter
+        const averageHealth = Math.round(totalPercent / localTrashCache.length);
+        if (trashHealthBarEl) {
+            trashHealthBarEl.style.width = `${averageHealth}%`;
+            if (averageHealth < 30) {
+                trashHealthBarEl.className = "h-full bg-red-500 transition-all duration-500 animate-pulse";
+            } else if (averageHealth < 70) {
+                trashHealthBarEl.className = "h-full bg-yellow-500 transition-all duration-500";
+            } else {
+                trashHealthBarEl.className = "h-full bg-green-500 transition-all duration-500";
+            }
+        }
+        if (trashHealthTextEl) {
+            trashHealthTextEl.textContent = `${localTrashCache.length} Item${localTrashCache.length > 1 ? 's' : ''} (${averageHealth}% Safe)`;
+        }
+    }
+
+    function openTrashSanctuary() {
+        const overlay = document.getElementById("trash-sanctuary-drawer-overlay");
+        const drawer = document.getElementById("trash-sanctuary-drawer");
+        if (!overlay || !drawer) return;
+
+        overlay.classList.remove("hidden");
+        overlay.offsetHeight; // trigger reflow
+        drawer.classList.remove("translate-x-full");
+        loadTrashSnippets();
+    }
+
+    function closeTrashSanctuary() {
+        const overlay = document.getElementById("trash-sanctuary-drawer-overlay");
+        const drawer = document.getElementById("trash-sanctuary-drawer");
+        if (!overlay || !drawer) return;
+
+        drawer.classList.add("translate-x-full");
+        setTimeout(() => {
+            overlay.classList.add("hidden");
+        }, 300);
+
+        if (trashUnsubscribe) {
+            trashUnsubscribe();
+            trashUnsubscribe = null;
+        }
+    }
+
+    async function handleRescueAll() {
+        if (!sessionToken) return;
+
+        customConfirm("Are you sure you want to rescue all soft-deleted snippets back to your Active Vault?", "Rescue All?", "fa-undo").then(async (confirmed) => {
+            if (confirmed) {
+                if (sessionToken === "guest") {
+                    let stored = localStorage.getItem("snipvault_guest_snippets");
+                    let list = stored ? JSON.parse(stored) : [];
+                    list.forEach(s => {
+                        if (s.isDeleted) {
+                            s.isDeleted = undefined;
+                            s.deletedAt = undefined;
+                        }
+                    });
+                    localStorage.setItem("snipvault_guest_snippets", JSON.stringify(list));
+                    showNotification("All snippets rescued successfully!", "success");
+                    loadTrashSnippets();
+                    loadUserSnippets();
+                    return;
+                }
+
+                try {
+                    await convexClient.mutation("snippets:restoreAllSnippets", { token: sessionToken });
+                    showNotification("All snippets rescued successfully!", "success");
+                    loadUserSnippets();
+                } catch(e) {
+                    console.error("Rescue all failed: ", e);
+                    showNotification("Failed to rescue all snippets.", "error");
+                }
+            }
+        });
+    }
+
+    async function handleEmptyTrash() {
+        if (!sessionToken) return;
+
+        customConfirm("Are you absolutely sure you want to permanently vaporize all trash snippets? This nuclear wipe cannot be undone.", "Nuclear Wipe?", "fa-radiation").then(async (confirmed) => {
+            if (confirmed) {
+                if (sessionToken === "guest") {
+                    let stored = localStorage.getItem("snipvault_guest_snippets");
+                    let list = stored ? JSON.parse(stored) : [];
+                    list = list.filter(s => !s.isDeleted);
+                    localStorage.setItem("snipvault_guest_snippets", JSON.stringify(list));
+                    showNotification("Vault fully purged.", "success");
+                    loadTrashSnippets();
+                    return;
+                }
+
+                try {
+                    await convexClient.mutation("snippets:emptyTrashPermanently", { token: sessionToken });
+                    showNotification("Vault fully purged.", "success");
+                } catch(e) {
+                    console.error("Empty trash failed: ", e);
+                    showNotification("Failed to empty trash vault.", "error");
+                }
+            }
         });
     }
     
@@ -2059,21 +2384,54 @@ const migrateNameEl = document.getElementById('migrate-name');
                 pendingBadge.innerHTML = `<i class="fas fa-clock text-[8px] animate-pulse"></i> Offline Pending`;
                 titleCategoryDiv.appendChild(pendingBadge);
             }
+            if (currentSnippetsTab === 'trash') {
+                const now = Date.now();
+                const deletedTime = snippet.deletedAt || now;
+                const msRemaining = (7 * 24 * 60 * 60 * 1000) - (now - deletedTime);
+                const daysRemaining = Math.max(0, Math.ceil(msRemaining / (24 * 60 * 60 * 1000)));
+                const countdownText = `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} left`;
+                
+                const countdownBadge = document.createElement('span');
+                countdownBadge.className = 'bg-red-100 text-red-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full ml-1.5 flex items-center gap-1';
+                countdownBadge.innerHTML = `<i class="fas fa-clock text-[8px] animate-pulse"></i> ${countdownText}`;
+                titleCategoryDiv.appendChild(countdownBadge);
+            }
             headerDiv.appendChild(titleCategoryDiv);
+            
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'snippet-actions';
-            const editBtn = document.createElement('button');
-            editBtn.innerHTML = `<i class="fas fa-edit"></i> Edit`;
-            editBtn.className = 'action-btn edit-btn';
-            editBtn.title = "Edit snippet";
-            editBtn.addEventListener('click', (e) => { e.stopPropagation(); showDetailView(snippet.id, 'edit'); });
-            actionsDiv.appendChild(editBtn);
-            const deleteBtn = document.createElement('button');
-            deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i> Delete`;
-            deleteBtn.className = 'action-btn delete-btn';
-            deleteBtn.title = "Delete snippet";
-            deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); handleDeleteSnippet(snippet.id); });
-            actionsDiv.appendChild(deleteBtn);
+            
+            if (currentSnippetsTab === 'trash') {
+                const restoreBtn = document.createElement('button');
+                restoreBtn.innerHTML = `<i class="fas fa-undo"></i> Restore`;
+                restoreBtn.className = 'action-btn';
+                restoreBtn.style.cssText = "background-color: #dcfce7 !important; color: #166534 !important; border-color: #1f2937 !important;";
+                restoreBtn.title = "Restore snippet";
+                restoreBtn.addEventListener('click', (e) => { e.stopPropagation(); handleRestoreSnippet(snippet.id); });
+                actionsDiv.appendChild(restoreBtn);
+
+                const deletePermanentlyBtn = document.createElement('button');
+                deletePermanentlyBtn.innerHTML = `<i class="fas fa-skull"></i> Wipe`;
+                deletePermanentlyBtn.className = 'action-btn';
+                deletePermanentlyBtn.style.cssText = "background-color: #fee2e2 !important; color: #991b1b !important; border-color: #1f2937 !important;";
+                deletePermanentlyBtn.title = "Permanently delete snippet";
+                deletePermanentlyBtn.addEventListener('click', (e) => { e.stopPropagation(); handleDeleteSnippetPermanently(snippet.id); });
+                actionsDiv.appendChild(deletePermanentlyBtn);
+            } else {
+                const editBtn = document.createElement('button');
+                editBtn.innerHTML = `<i class="fas fa-edit"></i> Edit`;
+                editBtn.className = 'action-btn edit-btn';
+                editBtn.title = "Edit snippet";
+                editBtn.addEventListener('click', (e) => { e.stopPropagation(); showDetailView(snippet.id, 'edit'); });
+                actionsDiv.appendChild(editBtn);
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.innerHTML = `<i class="fas fa-trash-alt"></i> Delete`;
+                deleteBtn.className = 'action-btn delete-btn';
+                deleteBtn.title = "Delete snippet";
+                deleteBtn.addEventListener('click', (e) => { e.stopPropagation(); handleDeleteSnippet(snippet.id); });
+                actionsDiv.appendChild(deleteBtn);
+            }
             headerDiv.appendChild(actionsDiv);
             snippetItem.appendChild(headerDiv);
             const textPreviewP = document.createElement('div');
@@ -2303,7 +2661,7 @@ const migrateNameEl = document.getElementById('migrate-name');
             showNotification('You must be logged in to delete snippets.', 'error');
             return;
         }
-        customConfirm('Are you sure you want to permanently delete this snippet?', 'Delete Snippet?', 'fa-trash-alt').then(async (confirmed) => {
+        customConfirm('Are you sure you want to move this snippet to the Trash Pile? It can be recovered within 7 days.', 'Trash Snippet?', 'fa-trash-alt').then(async (confirmed) => {
             if (confirmed) {
                 // Check if it is an offline-pending snippet (which has a numeric/Date.now() ID)
                 const isOfflineSnippet = typeof snippetId === 'number' || !isNaN(snippetId);
@@ -2324,33 +2682,136 @@ const migrateNameEl = document.getElementById('migrate-name');
                     }
                 }
 
-                // Guest Mode Delete
+                // Guest Mode Delete (Soft Delete)
+                if (sessionToken === "guest") {
+                    let stored = localStorage.getItem("snipvault_guest_snippets");
+                    let list = stored ? JSON.parse(stored) : [];
+                    const index = list.findIndex(s => s._id === snippetId);
+                    if (index !== -1) {
+                        list[index].isDeleted = true;
+                        list[index].deletedAt = Date.now();
+                        localStorage.setItem("snipvault_guest_snippets", JSON.stringify(list));
+                        showNotification('Snippet moved to Trash Pile (retains for 7 days).', 'info');
+                        loadUserSnippets();
+                        loadTrashSnippets(); // Sync Trash Sanctuary drawer!
+                        if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
+                            showMainView(); 
+                        }
+                    }
+                    return;
+                }
+
+                // Standard Convex Soft Delete with Offline Fallback
+                try {
+                    if (!navigator.onLine) {
+                        throw new Error("Offline");
+                    }
+                    await convexClient.mutation("snippets:deleteSnippet", {
+                        token: sessionToken,
+                        id: snippetId
+                    });
+                    showNotification('Snippet moved to Trash Pile.', 'info');
+                    loadUserSnippets();
+                    loadTrashSnippets(); // Sync Trash Sanctuary drawer!
+                    if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
+                        showMainView(); 
+                    }
+                } catch (error) {
+                    console.error("Mutation failed, attempting offline soft-delete fallback:", error);
+                    try {
+                        // Mark IndexedDB local copy as soft-deleted if present
+                        const db = await openDB();
+                        const tx = db.transaction(STORE_NAME, 'readwrite');
+                        const store = tx.objectStore(STORE_NAME);
+                        const localItem = await new Promise((resolve, reject) => {
+                            const req = store.get(snippetId);
+                            req.onsuccess = (e) => resolve(e.target.result);
+                            req.onerror = (e) => reject(e.target.error);
+                        });
+
+                        if (localItem) {
+                            localItem.isDeleted = true;
+                            localItem.deletedAt = Date.now();
+                            await new Promise((resolve, reject) => {
+                                const req = store.put(localItem);
+                                req.onsuccess = () => resolve();
+                                req.onerror = (e) => reject(e.target.error);
+                            });
+                            showNotification('Snippet moved to Trash (Offline mode).', 'info');
+                            loadUserSnippets();
+                            loadTrashSnippets(); // Sync Trash Sanctuary drawer!
+                            if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
+                                showMainView(); 
+                            }
+                        } else {
+                            throw error; // Rethrow original error if not found in offline DB
+                        }
+                    } catch(err) {
+                        console.error("Error soft-deleting offline snippet:", err);
+                        showNotification('Failed to move snippet to trash. Please check your connection.', 'error');
+                    }
+                }
+            }
+        });
+    }
+
+    async function handleRestoreSnippet(snippetId) {
+        if (!sessionToken) return;
+        
+        if (sessionToken === "guest") {
+            let stored = localStorage.getItem("snipvault_guest_snippets");
+            let list = stored ? JSON.parse(stored) : [];
+            const index = list.findIndex(s => s._id === snippetId);
+            if (index !== -1) {
+                list[index].isDeleted = undefined;
+                list[index].deletedAt = undefined;
+                localStorage.setItem("snipvault_guest_snippets", JSON.stringify(list));
+                showNotification('Snippet restored to Active Vault!', 'success');
+                loadUserSnippets();
+                loadTrashSnippets(); // Sync Trash Sanctuary drawer!
+            }
+            return;
+        }
+
+        try {
+            await convexClient.mutation("snippets:restoreSnippet", {
+                token: sessionToken,
+                id: snippetId
+            });
+            showNotification('Snippet restored successfully!', 'success');
+            loadUserSnippets();
+        } catch (error) {
+            console.error("Restore failed:", error);
+            showNotification('Failed to restore snippet.', 'error');
+        }
+    }
+
+    async function handleDeleteSnippetPermanently(snippetId) {
+        if (!sessionToken) return;
+        
+        customConfirm('Are you absolutely sure you want to PERMANENTLY delete this snippet? This action cannot be undone.', 'Permanently Delete?', 'fa-radiation').then(async (confirmed) => {
+            if (confirmed) {
                 if (sessionToken === "guest") {
                     let stored = localStorage.getItem("snipvault_guest_snippets");
                     let list = stored ? JSON.parse(stored) : [];
                     list = list.filter(s => s._id !== snippetId);
                     localStorage.setItem("snipvault_guest_snippets", JSON.stringify(list));
-                    showNotification('Snippet deleted.', 'info');
+                    showNotification('Snippet permanently deleted.', 'info');
                     loadUserSnippets();
-                    if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
-                        showMainView(); 
-                    }
+                    loadTrashSnippets(); // Sync Trash Sanctuary drawer!
                     return;
                 }
 
-                // Standard Convex Delete
                 try {
-                    await convexClient.mutation("snippets:deleteSnippet", {
+                    await convexClient.mutation("snippets:deleteSnippetPermanently", {
                         token: sessionToken,
                         id: snippetId
                     });
-                    showNotification('Snippet deleted.', 'info');
-                    if (currentEditingSnippetId === snippetId && detailViewEl && !detailViewEl.classList.contains('hidden')) { 
-                        showMainView(); 
-                    }
+                    showNotification('Snippet permanently removed.', 'info');
+                    loadUserSnippets();
                 } catch (error) {
-                    console.error("Error deleting snippet: ", error);
-                    showNotification('Failed to delete snippet.', 'error');
+                    console.error("Permanent deletion failed:", error);
+                    showNotification('Failed to permanently delete snippet.', 'error');
                 }
             }
         });
@@ -2517,15 +2978,15 @@ const migrateNameEl = document.getElementById('migrate-name');
             })
             .catch(err => {
                 bodyEl.innerHTML = `
-                    <h4 class="font-bold text-gray-850 mb-1.5 text-xs">${isTerms ? "SnipVault Terms of Service Summary" : "SnipVault Privacy Shield & Policy Summary"}</h4>
-                    <p class="mb-2 text-[10.5px] leading-relaxed">By accessing SnipVault, you explicitly agree to these clear developer-centric terms:</p>
+                    <h4 class="font-bold text-gray-850 mb-1.5 text-xs">${isTerms ? "Riff Terms of Service Summary" : "Riff Privacy Shield & Policy Summary"}</h4>
+                    <p class="mb-2 text-[10.5px] leading-relaxed">By accessing Riff, you explicitly agree to these clear developer-centric terms:</p>
                     <ul class="list-disc pl-4 space-y-1 text-[10.5px] mb-2">
                         <li><strong>Data Ownership:</strong> All snippets and categories belong 100% to you. I host no mining or selling tools.</li>
                         <li><strong>Secure Sessions:</strong> I use safe salt/hashing on Brevo & Convex. You are responsible for keeping passwords secure.</li>
                         <li><strong>GDPR Compliance:</strong> You can export everything as JSON or wipe all cloud records instantly with zero residuals.</li>
                         <li><strong>Offline Sandbox:</strong> In guest mode, all snippets stay locally inside your browser storage completely offline.</li>
                     </ul>
-                    <p class="font-bold text-indigo-600 text-[10.5px]">SnipVault is crafted by Rohit as a 100% free open-source utility.</p>
+                    <p class="font-bold text-indigo-600 text-[10.5px]">Riff is crafted by Rohit as a 100% free open-source utility.</p>
                 `;
             });
 
@@ -2863,12 +3324,95 @@ const migrateNameEl = document.getElementById('migrate-name');
         });
     }
 
+    // --- Dynamic Dynamic Fetch Overlays for Footer Navigation ---
+    window.openDynamicInfoOverlay = function(pageUrl, title = "Information") {
+        const overlay = document.getElementById('info-pages-overlay');
+        const content = document.getElementById('info-pages-overlay-content');
+        const titleEl = document.getElementById('info-overlay-title');
+        const bodyEl = document.getElementById('info-overlay-body');
+
+        if (!overlay || !bodyEl || !content) return;
+
+        titleEl.textContent = title;
+        bodyEl.innerHTML = "<div class='text-center py-8 font-mono text-gray-500'><i class='fas fa-spinner fa-spin mr-2'></i>Loading page content...</div>";
+
+        overlay.classList.remove('hidden');
+        overlay.offsetHeight; // trigger reflow
+        content.classList.remove('scale-95', 'opacity-0');
+        content.classList.add('scale-100', 'opacity-100');
+
+        fetch(pageUrl)
+            .then(res => res.text())
+            .then(html => {
+                const tempDiv = document.createElement("div");
+                tempDiv.innerHTML = html;
+                const article = tempDiv.querySelector("article");
+                if (article) {
+                    // Replace branding visually inside the overlay as well
+                    let rawHtml = article.innerHTML;
+                    rawHtml = rawHtml.replace(/SnipVault/g, "Riff");
+                    bodyEl.innerHTML = rawHtml;
+                    
+                    bodyEl.querySelectorAll("h1, h2, h3, p, ul, ol, li, table, td, th").forEach(el => {
+                        el.style.borderRadius = "0px";
+                    });
+                } else {
+                    bodyEl.innerHTML = "<p class='font-mono text-center text-red-500'>Failed to extract content container.</p>";
+                }
+            })
+            .catch(err => {
+                console.error("Dynamic fetch error:", err);
+                bodyEl.innerHTML = `<p class='font-mono text-center text-red-500'>Error loading page. Please verify your connection.</p>`;
+            });
+    }
+
+    window.closeDynamicInfoOverlay = function() {
+        const overlay = document.getElementById('info-pages-overlay');
+        const content = document.getElementById('info-pages-overlay-content');
+        if (!overlay || !content) return;
+
+        content.classList.remove('scale-100', 'opacity-100');
+        content.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 300);
+    }
+
+    // Intercept footer overlay links
+    setTimeout(() => {
+        document.querySelectorAll(".footer-overlay-link").forEach(link => {
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                const href = link.getAttribute("href");
+                const text = link.textContent.trim();
+                window.openDynamicInfoOverlay(href, text);
+            });
+        });
+
+        const infoCloseBtn = document.getElementById("info-overlay-close-btn");
+        if (infoCloseBtn) {
+            infoCloseBtn.addEventListener("click", window.closeDynamicInfoOverlay);
+        }
+        
+        // Trash Sanctuary Drawer handlers
+        const toggleTrashBtn = document.getElementById("toggle-trash-btn");
+        const closeTrashDrawerBtn = document.getElementById("close-trash-drawer-btn");
+        const trashSanctuaryDrawerOverlay = document.getElementById("trash-sanctuary-drawer-overlay");
+        const rescueAllBtn = document.getElementById("rescue-all-btn");
+        const emptyTrashBtn = document.getElementById("empty-trash-btn");
+
+        if (toggleTrashBtn) toggleTrashBtn.addEventListener("click", openTrashSanctuary);
+        if (closeTrashDrawerBtn) closeTrashDrawerBtn.addEventListener("click", closeTrashSanctuary);
+        if (trashSanctuaryDrawerOverlay) trashSanctuaryDrawerOverlay.addEventListener("click", closeTrashSanctuary);
+        if (rescueAllBtn) rescueAllBtn.addEventListener("click", handleRescueAll);
+        if (emptyTrashBtn) emptyTrashBtn.addEventListener("click", handleEmptyTrash);
+    }, 150);
+
     const menuAboutBtn = document.getElementById("menu-about");
     if (menuAboutBtn) {
         menuAboutBtn.addEventListener("click", () => {
             hideCustomContextMenu();
-            localStorage.setItem("snipvault_skip_intro", "true");
-            window.location.href = "about.html";
+            window.openDynamicInfoOverlay("about.html", "About Riff");
         });
     }
 
@@ -2876,8 +3420,7 @@ const migrateNameEl = document.getElementById('migrate-name');
     if (menuPricingBtn) {
         menuPricingBtn.addEventListener("click", () => {
             hideCustomContextMenu();
-            localStorage.setItem("snipvault_skip_intro", "true");
-            window.location.href = "pricing.html";
+            window.openDynamicInfoOverlay("pricing.html", "Pricing Plans");
         });
     }
 
@@ -2885,8 +3428,7 @@ const migrateNameEl = document.getElementById('migrate-name');
     if (menuOpensourceBtn) {
         menuOpensourceBtn.addEventListener("click", () => {
             hideCustomContextMenu();
-            localStorage.setItem("snipvault_skip_intro", "true");
-            window.location.href = "opensource.html";
+            window.openDynamicInfoOverlay("opensource.html", "Open Source Registry");
         });
     }
 
@@ -2900,7 +3442,9 @@ const migrateNameEl = document.getElementById('migrate-name');
         if(detailViewEl) detailViewEl.classList.add('hidden');
         if(accountViewEl) accountViewEl.classList.add('hidden');
         if(snippetsViewEl) snippetsViewEl.classList.remove('hidden');
-        renderSnippets();
+        
+        currentSnippetsTab = 'active';
+        loadUserSnippets();
     }
 
     // Connect page navigations

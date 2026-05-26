@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnipVault - Your Contextual Snippet Sanctuary</title>
+    <title>Riff - Your Premium Snippet Sanctuary | Sonata Interactive</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850&family=Outfit:wght@400;600;800&family=Fira+Code:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Pacifico&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
     <script src="config.js" onerror="window.CONVEX_CONFIG_ERROR = true;"></script>
     <script src="https://unpkg.com/convex@1.12.0/dist/browser.bundle.js"></script>
 </head>
-<body class="bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-100 font-inter text-gray-800 overflow-x-hidden">
+<body class="bg-slate-100 font-inter text-gray-800 overflow-x-hidden">
     
     <!-- Setup Error Screen (shown when config.js is missing or invalid) -->
     <div id="setup-error-screen" class="hidden fixed inset-0 bg-gradient-to-br from-red-50 to-rose-100 flex flex-col justify-center items-center p-4 z-[9999]">
@@ -53,7 +53,7 @@
         </script>
         <div id="intro-card" class="bg-white border-4 border-gray-900 p-8 sm:p-12 text-center shadow-[8px_8px_0px_0px_#4f46e5] max-w-sm sm:max-w-md w-11/12 transform transition-all">
             <h1 id="dynamic-logo" class="text-4xl sm:text-6xl font-extrabold text-gray-900 font-mono tracking-tighter uppercase mb-4 animate-pulse">
-                SnipVault
+                Riff
             </h1>
             <div class="h-2 w-full bg-gray-900 mb-6 relative overflow-hidden">
                 <div class="absolute inset-0 bg-indigo-500 animate-pulse"></div>
@@ -101,10 +101,15 @@
             </div>
             <div class="text-center mb-8">
                 <div class="flex justify-center items-center mb-2">
-                     <svg class="h-10 w-auto text-indigo-600" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M10 20C10 14.4772 14.4772 10 20 10H80C85.5228 10 90 14.4772 90 20V30H70C64.4772 30 60 34.4772 60 40V80C60 85.5228 64.4772 90 70 90H80C85.5228 90 90 85.5228 90 80V70H30C24.4772 70 20 65.5228 20 60V20H10ZM30 40H50V60H30V40Z"/>
+                     <svg class="h-10 w-auto text-indigo-600 drop-shadow-[0_2px_8px_rgba(99,102,241,0.25)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="15" y="35" width="8" height="30" rx="4" fill="currentColor" />
+                        <rect x="29" y="20" width="8" height="60" rx="4" fill="currentColor" />
+                        <rect x="43" y="10" width="8" height="80" rx="4" fill="currentColor" />
+                        <rect x="57" y="25" width="8" height="50" rx="4" fill="currentColor" />
+                        <rect x="71" y="40" width="8" height="20" rx="4" fill="currentColor" />
+                        <rect x="85" y="30" width="8" height="40" rx="4" fill="currentColor" />
                      </svg>
-                    <h1 class="text-3xl font-bold text-indigo-600 ml-2">SnipVault</h1>
+                    <h1 class="text-3xl ml-2"><span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 font-black uppercase font-outfit tracking-wider">Riff</span></h1>
                 </div>
                 <p class="text-gray-500 text-sm">Securely save, sync, and organize your ideas.</p>
             </div>
@@ -223,6 +228,12 @@
                     <i class="fas fa-cog"></i>
                     <span>Manage Account</span>
                 </button>
+
+                <!-- Trash Sanctuary Drawer Toggle -->
+                <button id="toggle-trash-btn" class="bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold py-1.5 px-3 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1 border border-rose-200">
+                    <i class="fas fa-trash-alt text-rose-500 animate-pulse"></i>
+                    <span>Trash Vault</span>
+                </button>
                 
                 <button id="logout-btn" class="bg-red-500 hover:bg-red-600 text-white font-semibold py-1.5 px-3 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1">
                     <i class="fas fa-sign-out-alt"></i>
@@ -235,10 +246,15 @@
         <div id="main-view">
             <header class="mb-8 text-center pt-2">
                 <div class="flex justify-center items-center mb-2">
-                     <svg id="header-logo-svg" class="h-12 w-auto text-indigo-600" viewBox="0 0 100 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M10 20C10 14.4772 14.4772 10 20 10H80C85.5228 10 90 14.4772 90 20V30H70C64.4772 30 60 34.4772 60 40V80C60 85.5228 64.4772 90 70 90H80C85.5228 90 90 85.5228 90 80V70H30C24.4772 70 20 65.5228 20 60V20H10ZM30 40H50V60H30V40Z"/>
+                     <svg id="header-logo-svg" class="h-12 w-auto text-indigo-600 drop-shadow-[0_2px_8px_rgba(99,102,241,0.25)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="15" y="35" width="8" height="30" rx="4" fill="currentColor" />
+                        <rect x="29" y="20" width="8" height="60" rx="4" fill="currentColor" />
+                        <rect x="43" y="10" width="8" height="80" rx="4" fill="currentColor" />
+                        <rect x="57" y="25" width="8" height="50" rx="4" fill="currentColor" />
+                        <rect x="71" y="40" width="8" height="20" rx="4" fill="currentColor" />
+                        <rect x="85" y="30" width="8" height="40" rx="4" fill="currentColor" />
                      </svg>
-                    <h1 class="text-4xl sm:text-5xl font-bold text-indigo-600 ml-3">SnipVault</h1>
+                    <h1 class="text-4xl sm:text-5xl ml-3"><span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 font-black uppercase font-outfit tracking-wider animate-pulse">Riff</span></h1>
                 </div>
                 <p class="text-gray-500 text-sm">Quickly save, organize, and find your thoughts, links, and code.</p>
             </header>
@@ -319,7 +335,12 @@
             <button id="back-from-snippets-btn" class="mb-6 bg-gray-250 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow transition-colors duration-150 text-sm">
                 <i class="fas fa-arrow-left mr-2"></i>Back to Creator
             </button>
-            <h2 class="text-3xl font-extrabold mb-6 text-indigo-600 border-b pb-4">Saved Snippets</h2>
+            <h2 class="text-3xl font-extrabold mb-4 text-indigo-600 border-b pb-3">Saved Snippets</h2>
+            <!-- Saved snippets indicator -->
+            <div class="flex items-center space-x-2 border-b-2 border-gray-900 mb-6 pb-2.5 font-mono text-sm font-bold uppercase text-gray-700">
+                <i class="fas fa-folder-open text-indigo-600 text-lg"></i>
+                <span>Active Vault Snippets</span>
+            </div>
             
             <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-3">
                 <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
@@ -591,16 +612,25 @@
             </div>
         </div>
 
-        <!-- DEV-FOCUSED FOOTER NAVIGATION -->
-        <footer class="text-center mt-16 py-8 border-t-2 border-dashed border-indigo-200">
-            <div class="flex flex-wrap justify-center gap-6 mb-4 text-xs font-mono font-semibold uppercase tracking-wider text-indigo-700">
-                <a href="about.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-info-circle"></i> About</a>
-                <a href="pricing.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-tags"></i> Pricing</a>
-                <a href="opensource.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-code"></i> Open Source</a>
-                <a href="privacy.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
-                <a href="terms.html" class="hover:text-indigo-900 transition-colors flex items-center gap-1"><i class="fas fa-file-contract"></i> Terms</a>
+        <!-- REDESIGNED premium FOOTER NAVIGATION UNDER SONATA INTERACTIVE -->
+        <footer class="mt-20 py-10 border-t-4 border-gray-900 bg-white text-center font-mono">
+            <div class="max-w-4xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+                <div class="text-left">
+                    <p class="text-xs uppercase font-extrabold text-gray-950 tracking-wider">Riff Workspace</p>
+                    <p class="text-[10px] text-gray-400 mt-1 uppercase">A Premium sub-branch of Sonata Interactive</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-4 text-[11px] font-bold uppercase tracking-wider text-indigo-750">
+                    <a href="about.html" class="footer-overlay-link hover:text-indigo-950 transition-all border-b border-transparent hover:border-indigo-950 flex items-center gap-1"><i class="fas fa-info-circle"></i> About</a>
+                    <a href="pricing.html" class="footer-overlay-link hover:text-indigo-950 transition-all border-b border-transparent hover:border-indigo-950 flex items-center gap-1"><i class="fas fa-tags"></i> Pricing</a>
+                    <a href="opensource.html" class="footer-overlay-link hover:text-indigo-950 transition-all border-b border-transparent hover:border-indigo-950 flex items-center gap-1"><i class="fas fa-code"></i> Open Source</a>
+                    <a href="privacy.html" class="footer-overlay-link hover:text-indigo-950 transition-all border-b border-transparent hover:border-indigo-950 flex items-center gap-1"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+                    <a href="terms.html" class="footer-overlay-link hover:text-indigo-950 transition-all border-b border-transparent hover:border-indigo-950 flex items-center gap-1"><i class="fas fa-file-contract"></i> Terms</a>
+                </div>
             </div>
-            <p class="text-xs text-gray-500 font-mono mt-2">&copy; <span id="current-year"></span> SnipVault. Crafted with <i class="fas fa-heart text-red-500"></i>. Created by Rohit.</p>
+            <div class="max-w-4xl mx-auto px-4 border-t border-gray-150 mt-6 pt-6 flex flex-col sm:flex-row justify-between items-center text-[10px] text-gray-400 uppercase tracking-widest gap-3">
+                <p>&copy; <span id="current-year"></span> Sonata Interactive. Crafted with <i class="fas fa-heart text-red-500 animate-pulse"></i>. Created by Rohit.</p>
+                <p>Status: All Systems Reactive</p>
+            </div>
         </footer>
     </div>
 
@@ -909,7 +939,7 @@
         <div class="border-t border-indigo-100/50 my-1.5"></div>
         <button id="menu-about" class="w-full text-left py-2 px-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-105 text-indigo-750 flex items-center space-x-2 transition-all duration-150 shadow-sm">
             <i class="fas fa-info-circle text-indigo-500"></i>
-            <span>About SnipVault</span>
+            <span>About Riff</span>
         </button>
         <button id="menu-pricing" class="w-full text-left py-2 px-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 border border-indigo-105 text-indigo-750 flex items-center space-x-2 transition-all duration-150 shadow-sm">
             <i class="fas fa-tags text-indigo-500"></i>
@@ -919,6 +949,325 @@
             <i class="fas fa-code text-indigo-500"></i>
             <span>Open Source Registry</span>
         </button>
+    </div>
+
+    <!-- DEDICATED LANDING PAGE FOR NEW/NON-ACCOUNT VISITORS -->
+    <div id="landing-view" class="hidden min-h-screen flex flex-col bg-slate-50 font-sans" style="background-image: linear-gradient(rgba(100, 116, 139, 0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(100, 116, 139, 0.05) 1px, transparent 1px); background-size: 24px 24px;">
+        
+        <!-- Header Section -->
+        <header class="w-full bg-white border-b-4 border-gray-900 sticky top-0 z-50">
+            <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center space-x-2">
+                     <svg class="h-8 w-auto text-indigo-600 drop-shadow-[0_2px_4px_rgba(99,102,241,0.2)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="15" y="35" width="8" height="30" rx="4" fill="currentColor" />
+                        <rect x="29" y="20" width="8" height="60" rx="4" fill="currentColor" />
+                        <rect x="43" y="10" width="8" height="80" rx="4" fill="currentColor" />
+                        <rect x="57" y="25" width="8" height="50" rx="4" fill="currentColor" />
+                        <rect x="71" y="40" width="8" height="20" rx="4" fill="currentColor" />
+                        <rect x="85" y="30" width="8" height="40" rx="4" fill="currentColor" />
+                     </svg>
+                    <span class="text-2xl ml-2"><span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 font-black uppercase font-outfit tracking-wider">Riff</span></span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <span class="hidden sm:inline font-mono text-xs font-bold text-gray-500 uppercase">Parent: Sonata Interactive</span>
+                    <button onclick="document.getElementById('landing-launch-btn').click()" class="bg-indigo-100 hover:bg-indigo-200 border-2 border-gray-900 px-3 py-1.5 font-mono text-xs font-bold uppercase shadow-[2px_2px_0px_0px_#1f2937] transition-all">Launch</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- HERO SECTION -->
+        <section class="max-w-6xl mx-auto px-4 py-16 flex flex-col lg:flex-row items-center gap-12 border-b-2 border-dashed border-gray-300">
+            <div class="flex-1 space-y-6 text-left">
+                <span class="inline-block bg-indigo-100 border-2 border-indigo-650 text-indigo-800 font-mono text-xs font-bold uppercase tracking-widest px-4 py-1.5 shadow-[2px_2px_0px_0px_#1f2937]">
+                    Project Riff Workspace
+                </span>
+                <h1 class="text-4xl sm:text-6xl font-extrabold text-gray-900 font-mono tracking-tight uppercase leading-tight">
+                    Your Premium <br>Snippet Sanctuary
+                </h1>
+                <p class="text-md sm:text-lg text-gray-650 font-sans leading-relaxed">
+                    Riff is a lightweight, context-aware engineering sanctuary crafted by **Sonata Interactive**. Store your vital code segments, bookmarks, configuration blocks, and credentials with ultra-reactive cloud synchronizations or running in a 100% private, local client-side sandbox.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 pt-2">
+                    <button id="landing-launch-btn" class="flex-1 bg-indigo-100 hover:bg-indigo-200 text-indigo-900 border-2 border-gray-900 py-3.5 px-6 font-mono font-bold uppercase tracking-wider shadow-[4px_4px_0px_0px_#1f2937] transition-all transform active:scale-95">
+                        <i class="fas fa-sign-in-alt mr-2"></i>Enter Workspace
+                    </button>
+                    <button id="landing-guest-btn" class="flex-1 bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-2 border-gray-900 py-3.5 px-6 font-mono font-bold uppercase tracking-wider shadow-[4px_4px_0px_0px_#1f2937] transition-all transform active:scale-95">
+                        <i class="fas fa-user-secret mr-2"></i>Guest Sandbox
+                    </button>
+                </div>
+            </div>
+            <!-- Mockup Showcase Card -->
+            <div class="flex-1 w-full max-w-lg bg-white border-4 border-gray-900 p-6 shadow-[8px_8px_0px_0px_#4f46e5] font-mono text-xs relative overflow-hidden">
+                <div class="flex justify-between items-center border-b-2 border-gray-900 pb-3 mb-4 select-none">
+                    <div class="flex space-x-1.5">
+                        <span class="h-3 w-3 rounded-full bg-red-400 border border-gray-900"></span>
+                        <span class="h-3 w-3 rounded-full bg-yellow-400 border border-gray-900"></span>
+                        <span class="h-3 w-3 rounded-full bg-green-400 border border-gray-900"></span>
+                    </div>
+                    <span class="text-[10px] uppercase font-bold text-gray-400">riff_terminal.sh</span>
+                </div>
+                <div class="space-y-3.5 text-left text-gray-700">
+                    <p class="text-gray-400">// Connecting to Sonata Interactive cloud node...</p>
+                    <p class="text-green-700 font-bold"><i class="fas fa-check-circle"></i> Connected to Convex Serverless DB.</p>
+                    <p><span class="text-indigo-650 font-bold">active_session:</span> salt_hashed_token_valid</p>
+                    <div class="border-l-4 border-indigo-500 bg-gray-900 text-green-400 p-3 my-2 overflow-x-auto text-[10.5px]">
+                        <pre><code>// 7-Day Trash Pile Safety Indicator
+const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+const expiredTrash = snippets.filter(s => s.isDeleted && s.deletedAt < sevenDaysAgo);
+console.log(`Auto-cleaned: ${expiredTrash.length} expired fragments.`);</code></pre>
+                    </div>
+                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-wider">Status: All Systems Reactive</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- WHY RIFF OVERVIEW -->
+        <section class="max-w-6xl mx-auto px-4 py-16 text-center border-b-2 border-dashed border-gray-300">
+            <h2 class="text-3xl font-bold font-mono uppercase text-gray-900 mb-4">Why Evolve beyond Paid Snippet Managers?</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto mb-12 text-sm leading-relaxed font-sans">
+                Traditional productivity tools capture your keystrokes, sell your usage metrics, and enforce severe sync caps unless you upgrade to monthly subscriptions. Riff is built by Sonata Interactive to restore your absolute autonomy.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white border-2 border-gray-900 p-6 shadow-[4px_4px_0px_0px_#1f2937] text-left">
+                    <h3 class="text-lg font-bold font-mono text-indigo-700 mb-2">01 / SPEED</h3>
+                    <p class="text-xs text-gray-500 leading-relaxed font-sans">
+                        Powered by ES6 vanilla scripts and a local IndexedDB sandbox. Fast instant rendering and offline backup fallbacks.
+                    </p>
+                </div>
+                <div class="bg-white border-2 border-gray-900 p-6 shadow-[4px_4px_0px_0px_#1f2937] text-left">
+                    <h3 class="text-lg font-bold font-mono text-indigo-700 mb-2">02 / PRIVACY</h3>
+                    <p class="text-xs text-gray-500 leading-relaxed font-sans">
+                        Zero server logging in local sandbox. Your snippets and categories belong 100% to you and reside strictly in your browser cache.
+                    </p>
+                </div>
+                <div class="bg-white border-2 border-gray-900 p-6 shadow-[4px_4px_0px_0px_#1f2937] text-left">
+                    <h3 class="text-lg font-bold font-mono text-indigo-700 mb-2">03 / SAFETY</h3>
+                    <p class="text-xs text-gray-500 leading-relaxed font-sans">
+                        Equipped with a 7-day Trash Pile. Restores accidental purges instantly, safeguarding you from developer coding slip-ups.
+                    </p>
+                </div>
+                <div class="bg-white border-2 border-gray-900 p-6 shadow-[4px_4px_0px_0px_#1f2937] text-left">
+                    <h3 class="text-lg font-bold font-mono text-indigo-700 mb-2">04 / INTEGRITY</h3>
+                    <p class="text-xs text-gray-500 leading-relaxed font-sans">
+                        Completely free of charge, with 1-click full JSON backup data exporting to guarantee zero customer lock-in.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- THE ARCHITECTURAL PILLARS (3-4x BIGGER CONTENT) -->
+        <section class="max-w-6xl mx-auto px-4 py-16 border-b-2 border-dashed border-gray-300">
+            <h2 class="text-3xl font-bold font-mono text-center uppercase text-gray-900 mb-12">Core Platform Pillars</h2>
+            
+            <div class="space-y-12">
+                <!-- Pillar 1 -->
+                <div class="flex flex-col md:flex-row items-center gap-8 bg-white border-2 border-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_0px_#1f2937] text-left">
+                    <div class="h-16 w-16 bg-indigo-100 border-2 border-gray-900 text-indigo-650 flex items-center justify-center text-3xl font-bold font-mono shrink-0 select-none">
+                        A
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-bold font-mono text-gray-900 uppercase">Ultra-Reactive Cloud Synchronizations</h3>
+                        <p class="text-sm text-gray-650 leading-relaxed font-sans">
+                            When you join the Cloud workspace, Riff hooks into a serverless Convex backend engine. It listens reactively via persistent query connections: if you alter a fragment on your laptop, it syncs instantly across your mobile browser and office workstation in milliseconds. Powered by salt/hashed sessions for absolute safety.
+                        </p>
+                        <ul class="list-disc list-inside text-xs text-gray-500 font-mono space-y-1 mt-2">
+                            <li>Real-time Convex Cloud reactive database</li>
+                            <li>Signed Salt/Hashed cryptographic token sessions</li>
+                            <li>Instant multi-device broadcast & automatic offline fallbacks</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Pillar 2 -->
+                <div class="flex flex-col md:flex-row items-center gap-8 bg-white border-2 border-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_0px_#1f2937] text-left">
+                    <div class="h-16 w-16 bg-yellow-100 border-2 border-gray-900 text-yellow-800 flex items-center justify-center text-3xl font-bold font-mono shrink-0 select-none">
+                        B
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-bold font-mono text-gray-900 uppercase">100% Offline Local Sandbox</h3>
+                        <p class="text-sm text-gray-650 leading-relaxed font-sans">
+                            No cloud accounts, zero registration, and zero data tracking. Guest Mode keeps all categories and snippet items strictly inside your browser sandbox (localStorage). Perfect for internal developer testing, technical API keys storage, or offline operations. You can migrate your local data to Convex cloud anytime.
+                        </p>
+                        <ul class="list-disc list-inside text-xs text-gray-500 font-mono space-y-1 mt-2">
+                            <li>Completely local and sandboxed client memory</li>
+                            <li>Zero cloud sync overhead or tracking network calls</li>
+                            <li>1-Click direct vault migration to authenticated Convex accounts</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Pillar 3 -->
+                <div class="flex flex-col md:flex-row items-center gap-8 bg-white border-2 border-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_0px_#1f2937] text-left">
+                    <div class="h-16 w-16 bg-red-100 border-2 border-gray-900 text-red-800 flex items-center justify-center text-3xl font-bold font-mono shrink-0 select-none">
+                        C
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-bold font-mono text-gray-900 uppercase">7-Day Trash Pile Safety Vault</h3>
+                        <p class="text-sm text-gray-650 leading-relaxed font-sans">
+                            Deleting a crucial fragment or script can set your deployment back by hours. Riff safeguards you by moving snippets into a soft-deleted "Trash Pile" state instead of clearing them immediately. Deleted data is held securely in the Trash tab for exactly 7 days before auto-purging.
+                        </p>
+                        <ul class="list-disc list-inside text-xs text-gray-500 font-mono space-y-1 mt-2">
+                            <li>Soft deletion timestamp tags with automated countdowns</li>
+                            <li>One-Click absolute recovery back to Active vault</li>
+                            <li>Background auto-cleanup for snippets older than 7 days</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Pillar 4 -->
+                <div class="flex flex-col md:flex-row items-center gap-8 bg-white border-2 border-gray-900 p-6 sm:p-8 shadow-[6px_6px_0px_0px_#1f2937] text-left">
+                    <div class="h-16 w-16 bg-green-100 border-2 border-gray-900 text-green-700 flex items-center justify-center text-3xl font-bold font-mono shrink-0 select-none">
+                        D
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-xl font-bold font-mono text-gray-900 uppercase">Prose WYSIWYG Editor with Live active Feedback</h3>
+                        <p class="text-sm text-gray-650 leading-relaxed font-sans">
+                            Capture complex layouts in style. Our WYSIWYG editor has been upgraded with dynamic button active highlighting (Bold, Italic, lists, bullets, headings) that lights up based on cursor selections. Features code block templates, custom typography selects, and inline sharp tables.
+                        </p>
+                        <ul class="list-disc list-inside text-xs text-gray-500 font-mono space-y-1 mt-2">
+                            <li>Active buttons highlighted with high-contrast neo-brutalist styling</li>
+                            <li>Pre-formatted monospace code-block insertion</li>
+                            <li>Overridden Tailwind presets ensuring visible headers and bullet matrices</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPARISON MATRIX -->
+        <section class="max-w-6xl mx-auto px-4 py-16 border-b-2 border-dashed border-gray-300">
+            <h2 class="text-3xl font-bold font-mono text-center uppercase text-gray-900 mb-12">Riff vs Generic Managers</h2>
+            <div class="overflow-x-auto bg-white border-2 border-gray-900 shadow-[6px_6px_0px_0px_#1f2937]">
+                <table class="min-w-full text-xs text-left">
+                    <thead class="bg-gray-150 text-gray-800 font-bold uppercase border-b-2 border-gray-900">
+                        <tr>
+                            <th class="p-4 border-r border-gray-900">Metric Parameters</th>
+                            <th class="p-4 border-r border-gray-900">Riff Plan (Sonata)</th>
+                            <th class="p-4">Paid Competitors</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 text-gray-650 font-mono">
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 border-r border-gray-900 font-bold text-gray-900">Keystroke Logging</td>
+                            <td class="p-4 border-r border-gray-900 text-green-700 font-bold"><i class="fas fa-shield-alt"></i> ZERO (Completely Localized)</td>
+                            <td class="p-4 text-red-700 font-bold"><i class="fas fa-exclamation-circle"></i> YES (Constantly Telemetred)</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 border-r border-gray-900 font-bold text-gray-900">Accidental Loss Protection</td>
+                            <td class="p-4 border-r border-gray-900 text-green-700 font-bold"><i class="fas fa-trash-restore"></i> YES (7-Day Trash Pile Vault)</td>
+                            <td class="p-4 text-red-700 font-bold"><i class="fas fa-times-circle"></i> NO (Permanent Instant Wipes)</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 border-r border-gray-900 font-bold text-gray-900">Multi-Device Sync Rate</td>
+                            <td class="p-4 border-r border-gray-900 text-green-700 font-bold"><i class="fas fa-bolt"></i> Realtime Reactive (Convex)</td>
+                            <td class="p-4 text-gray-500">Periodic (Requires Pro)</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 border-r border-gray-900 font-bold text-gray-900">Monthly Licensing Fee</td>
+                            <td class="p-4 border-r border-gray-900 text-green-700 font-bold">$0.00 (100% Free Forever)</td>
+                            <td class="p-4 text-red-700">$4.00 - $12.00 / month</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50">
+                            <td class="p-4 border-r border-gray-900 font-bold text-gray-900">Local Isolation (Offline)</td>
+                            <td class="p-4 border-r border-gray-900 text-green-700 font-bold">YES (Fully Sandboxed Guest Mode)</td>
+                            <td class="p-4 text-gray-500">Online Account Required</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- TECHNICAL STACK DETAILS -->
+        <section class="max-w-6xl mx-auto px-4 py-16 border-b-2 border-dashed border-gray-300">
+            <h2 class="text-3xl font-bold font-mono text-center uppercase text-gray-900 mb-12">Technical Architecture Specs</h2>
+            <div class="bg-gray-900 text-green-400 p-6 rounded-none border-2 border-gray-900 font-mono text-xs shadow-[6px_6px_0px_0px_#1f2937] text-left space-y-3">
+                <p class="text-indigo-400 font-bold tracking-wider">// Riff System Core Dependencies & Pillars</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                    <div>
+                        <p class="text-white font-bold"><i class="fas fa-server mr-2 text-indigo-500"></i>Backend Hosting Node:</p>
+                        <p class="text-gray-400">Convex Cloud Serverless DB Engine (Highly Reactive WebSockets)</p>
+                    </div>
+                    <div>
+                        <p class="text-white font-bold"><i class="fas fa-laptop-code mr-2 text-indigo-500"></i>Client Sandbox Architecture:</p>
+                        <p class="text-gray-400">HTML5 Semantic DOM API + ES6 Vanilla Javascript (Zero Bloat Frameworks)</p>
+                    </div>
+                    <div>
+                        <p class="text-white font-bold"><i class="fas fa-database mr-2 text-indigo-500"></i>Offline Caching Node:</p>
+                        <p class="text-gray-400">PWA Service Workers (sw.js) + IndexedDB Local Fallback Vaults</p>
+                    </div>
+                    <div>
+                        <p class="text-white font-bold"><i class="fas fa-user-shield mr-2 text-indigo-500"></i>Session Cryptography System:</p>
+                        <p class="text-gray-400">Cryptographically Signed salt-hashed Convex Token Handlers</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- DETAILED TECHNICAL FAQ ACCORDION -->
+        <section class="max-w-4xl mx-auto px-4 py-16">
+            <h2 class="text-3xl font-bold font-mono text-center uppercase text-gray-900 mb-12">Technical Frequently Asked Questions</h2>
+            
+            <div class="space-y-4 text-left">
+                <!-- FAQ 1 -->
+                <div class="bg-white border-2 border-gray-900 p-5 shadow-[4px_4px_0px_0px_#1f2937]">
+                    <strong class="block text-gray-950 font-mono text-sm uppercase">Q1: How secure are Riff's cloud sync networks?</strong>
+                    <p class="text-xs text-gray-600 mt-2 leading-relaxed font-sans">
+                        Riff leverages Convex serverless cloud infrastructures. All requests require authenticating tokens. Login sessions are secured using salt-hashed passwords, cryptographically verification links, and a real-time active session dashboard allowing you to revoke older sessions or devices immediately with zero traces.
+                    </p>
+                </div>
+                <!-- FAQ 2 -->
+                <div class="bg-white border-2 border-gray-900 p-5 shadow-[4px_4px_0px_0px_#1f2937]">
+                    <strong class="block text-gray-950 font-mono text-sm uppercase">Q2: How is Guest Mode client-side sandbox isolated?</strong>
+                    <p class="text-xs text-gray-600 mt-2 leading-relaxed font-sans">
+                        When choosing Guest Mode, the application sets a `snipvault_guest_mode` storage flag. Your browser operates entirely in local cache sandbox. No cloud queries are made, preventing any server telemetry logs. Be aware that clearing browser caches will erase guest records, so export backups often!
+                    </p>
+                </div>
+                <!-- FAQ 3 -->
+                <div class="bg-white border-2 border-gray-900 p-5 shadow-[4px_4px_0px_0px_#1f2937]">
+                    <strong class="block text-gray-950 font-mono text-sm uppercase">Q3: How exactly does the 7-day Trash Pile work?</strong>
+                    <p class="text-xs text-gray-600 mt-2 leading-relaxed font-sans">
+                        Upon deleting a snippet, the mutation/local handler sets `isDeleted: true` and `deletedAt: Date.now()`. Active dashboards exclude deleted fragments. When loading active databases, a background mutation checks for fragments where `deletedAt` is older than 7 days, purging them permanently.
+                    </p>
+                </div>
+                <!-- FAQ 4 -->
+                <div class="bg-white border-2 border-gray-900 p-5 shadow-[4px_4px_0px_0px_#1f2937]">
+                    <strong class="block text-gray-950 font-mono text-sm uppercase">Q4: Can I migrate local sandbox files directly to Convex Cloud?</strong>
+                    <p class="text-xs text-gray-600 mt-2 leading-relaxed font-sans">
+                        Yes! Inside Riff, guest users see a persistent "Sync to Cloud" CTA button. Logging in or creating an account automatically triggers our migration routines, merging all guest Categories and Snippets seamlessly into your secure database.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic CTA Footer Section -->
+        <footer class="w-full bg-white border-t-4 border-gray-900 py-8 font-mono mt-auto">
+            <div class="max-w-4xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center text-xs uppercase font-bold gap-4">
+                <p>&copy; Sonata Interactive. Riff Workspace. Crafted by Rohit.</p>
+                <div class="flex gap-4">
+                    <button onclick="document.getElementById('landing-launch-btn').click()" class="text-indigo-650 hover:underline">Secure Log In</button>
+                    <span class="text-gray-300">|</span>
+                    <button onclick="document.getElementById('landing-guest-btn').click()" class="text-yellow-800 hover:underline">Continue as Guest</button>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- DYNAMIC INFO PAGES OVERLAY (SPA PRESERVATION DRAWER) -->
+    <div id="info-pages-overlay" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 backdrop-blur-sm flex justify-center items-center p-4 z-[9000] transition-opacity duration-300">
+        <div id="info-pages-overlay-content" class="bg-white p-6 sm:p-10 text-left border-4 border-gray-900 shadow-[8px_8px_0px_0px_#4f46e5] max-w-3xl w-full h-[85vh] flex flex-col justify-between transform transition-all duration-300 scale-95 opacity-0 relative overflow-hidden">
+            <div class="flex items-center justify-between border-b-2 border-gray-900 pb-3 mb-4">
+                <h3 id="info-overlay-title" class="text-xl font-bold font-mono text-gray-900 uppercase">Information</h3>
+                <button type="button" id="info-overlay-close-btn" class="bg-gray-100 border-2 border-gray-900 py-1 px-3 hover:bg-gray-200 font-mono font-bold text-xs uppercase flex items-center gap-1 cursor-pointer">
+                    <i class="fas fa-times"></i> Close
+                </button>
+            </div>
+            <div id="info-overlay-body" class="flex-grow overflow-y-auto pr-2 text-sm text-gray-750 leading-relaxed font-sans prose max-w-none">
+                <!-- Loaded dynamically -->
+            </div>
+            <div class="border-t border-gray-200 pt-3 mt-4 text-center">
+                <p class="text-[9px] font-mono text-gray-400 uppercase tracking-widest font-bold">Riff &copy; Sonata Interactive</p>
+            </div>
+        </div>
     </div>
 
     <!-- CUSTOM CONFIRMATION MODAL -->
@@ -937,6 +1286,52 @@
                     Cancel
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- TRASH SANCTUARY SIDE DRAWER -->
+    <div id="trash-sanctuary-drawer-overlay" class="hidden fixed inset-0 bg-gray-900/60 backdrop-blur-md z-[8000] transition-opacity duration-300"></div>
+    <div id="trash-sanctuary-drawer" class="fixed right-0 top-0 bottom-0 w-full sm:w-[480px] bg-white border-l-4 border-gray-900 shadow-[-8px_0px_0px_0px_#1f2937] z-[8500] transform translate-x-full transition-transform duration-300 flex flex-col justify-between overflow-hidden">
+        <!-- HEADER -->
+        <div class="p-6 border-b-2 border-gray-900 bg-rose-50 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-trash-alt text-rose-600 text-xl animate-pulse"></i>
+                <h3 class="text-xl font-bold font-mono text-gray-900 uppercase">Trash Sanctuary</h3>
+            </div>
+            <button type="button" id="close-trash-drawer-btn" class="bg-white border-2 border-gray-900 py-1.5 px-3 hover:bg-gray-100 font-mono font-bold text-xs uppercase cursor-pointer">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+
+        <!-- HEALTH METER & ACTIONS -->
+        <div class="p-4 bg-gray-50 border-b border-gray-255">
+            <div class="flex justify-between items-center text-xs font-mono font-bold uppercase text-gray-500 mb-2">
+                <span>Vault Safety Level</span>
+                <span id="trash-health-text">0 Items</span>
+            </div>
+            <!-- Progress Bar / Safety Meter -->
+            <div class="w-full h-3 bg-gray-200 border-2 border-gray-900 overflow-hidden mb-4">
+                <div id="trash-health-bar" class="h-full bg-green-500 transition-all duration-500" style="width: 100%"></div>
+            </div>
+
+            <div class="flex space-x-2">
+                <button type="button" id="rescue-all-btn" class="flex-1 bg-green-50 hover:bg-green-100 text-green-700 font-bold border-2 border-gray-900 py-2 px-3 text-xs font-mono uppercase transition-all shadow-[2px_2px_0px_0px_#1f2937] hover:translate-y-[-1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_#1f2937] flex items-center justify-center gap-1.5">
+                    <i class="fas fa-undo-alt"></i> Rescue All
+                </button>
+                <button type="button" id="empty-trash-btn" class="flex-1 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold border-2 border-gray-900 py-2 px-3 text-xs font-mono uppercase transition-all shadow-[2px_2px_0px_0px_#1f2937] hover:translate-y-[-1px] active:translate-y-[1px] active:shadow-[1px_1px_0px_0px_#1f2937] flex items-center justify-center gap-1.5">
+                    <i class="fas fa-biohazard"></i> Empty Vault
+                </button>
+            </div>
+        </div>
+
+        <!-- TRASH CARD LIST -->
+        <div class="flex-grow overflow-y-auto p-6 bg-slate-50/50 space-y-4" id="trash-snippets-list">
+            <!-- Rendered dynamically -->
+        </div>
+
+        <!-- FOOTER -->
+        <div class="p-4 border-t-2 border-gray-900 bg-gray-50 text-center font-mono text-[9px] text-gray-400 uppercase tracking-widest font-bold">
+            7-Day Auto-Purge Sanctuary &copy; Sonata Interactive
         </div>
     </div>
 
