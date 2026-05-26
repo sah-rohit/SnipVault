@@ -6,7 +6,7 @@
     <title>SnipVault - Your Contextual Snippet Sanctuary</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850&family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;850&family=Outfit:wght@400;600;800&family=Fira+Code:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,700;1,400&family=Pacifico&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <!-- PWA Config -->
     <link rel="manifest" href="manifest.json">
@@ -43,13 +43,25 @@
             </p>
         </div>
     </div>
-
-    <!-- Intro Loader -->
-    <div id="intro-overlay" class="fixed inset-0 bg-indigo-600 flex flex-col justify-center items-center z-[6000] transition-opacity duration-1000 ease-in-out">
-        <div id="dynamic-logo" class="text-white text-6xl sm:text-8xl font-pacifico animate-pulse">
-            SnipVault
+ 
+    <!-- Intro Loader Overlay with Premium Blueprint Grid & Neo-Brutalist Card Animation -->
+    <div id="intro-overlay" class="fixed inset-0 bg-white flex flex-col justify-center items-center z-[6000] transition-opacity duration-1000 ease-in-out" style="background-image: linear-gradient(rgba(99, 102, 241, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(99, 102, 241, 0.08) 1px, transparent 1px); background-size: 20px 20px; display: none;">
+        <script>
+            if (!sessionStorage.getItem('snipvault_startup_done')) {
+                document.getElementById('intro-overlay').style.display = 'flex';
+            }
+        </script>
+        <div id="intro-card" class="bg-white border-4 border-gray-900 p-8 sm:p-12 text-center shadow-[8px_8px_0px_0px_#4f46e5] max-w-sm sm:max-w-md w-11/12 transform transition-all">
+            <h1 id="dynamic-logo" class="text-4xl sm:text-6xl font-extrabold text-gray-900 font-mono tracking-tighter uppercase mb-4 animate-pulse">
+                SnipVault
+            </h1>
+            <div class="h-2 w-full bg-gray-900 mb-6 relative overflow-hidden">
+                <div class="absolute inset-0 bg-indigo-500 animate-pulse"></div>
+            </div>
+            <p id="intro-subtitle" class="text-indigo-700 font-mono text-xs sm:text-sm uppercase tracking-widest font-bold opacity-0 translate-y-5">
+                [ Your Personal Snippet Sanctuary ]
+            </p>
         </div>
-        <p id="intro-subtitle" class="text-indigo-200 text-lg sm:text-xl mt-4 opacity-0 translate-y-5">Your personal snippet sanctuary.</p>
     </div>
 
     <!-- Offline Sync Banner -->
@@ -200,6 +212,12 @@
                     <span>Sync to Cloud</span>
                 </button>
                 
+                <!-- Snippets View Toggle -->
+                <button id="toggle-snippets-view-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-750 font-semibold py-1.5 px-3 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1 border border-indigo-105">
+                    <i class="fas fa-list"></i>
+                    <span>Saved Snippets</span>
+                </button>
+                
                 <!-- Account Panel Toggle -->
                 <button id="toggle-account-btn" class="bg-indigo-50 hover:bg-indigo-100 text-indigo-750 font-semibold py-1.5 px-3 rounded-lg shadow-sm text-xs transition-colors flex items-center space-x-1 border border-indigo-105">
                     <i class="fas fa-cog"></i>
@@ -231,7 +249,42 @@
                     <div class="space-y-5">
                         <div>
                             <label for="snippet-text" class="block text-sm font-medium text-gray-700 mb-1">Snippet Content <span class="text-red-500">*</span></label>
-                            <textarea id="snippet-text" rows="4" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-sm" placeholder="Paste or type your snippet here..."></textarea>
+                            
+                            <!-- WYSIWYG EDITOR CONTAINER -->
+                            <div class="border-2 border-gray-900 bg-white shadow-[3px_3px_0px_0px_#1f2937] mb-3">
+                                <!-- TOOLBAR -->
+                                <div class="flex flex-wrap items-center bg-gray-50 border-b-2 border-gray-900 p-1.5 gap-1 select-none font-mono text-xs font-bold uppercase">
+                                    <button type="button" data-cmd="bold" onmousedown="event.preventDefault()" onclick="formatDoc('bold')" title="Bold" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-bold"></i></button>
+                                    <button type="button" data-cmd="italic" onmousedown="event.preventDefault()" onclick="formatDoc('italic')" title="Italic" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-italic"></i></button>
+                                    <div class="w-[1px] h-4 bg-gray-900 mx-1"></div>
+                                    <button type="button" data-cmd="insertUnorderedList" onmousedown="event.preventDefault()" onclick="formatDoc('insertUnorderedList')" title="Bullet List" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-list-ul"></i></button>
+                                    <button type="button" data-cmd="insertOrderedList" onmousedown="event.preventDefault()" onclick="formatDoc('insertOrderedList')" title="Numbered List" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-list-ol"></i></button>
+                                    <div class="w-[1px] h-4 bg-gray-900 mx-1"></div>
+                                    <button type="button" data-cmd="h1" onmousedown="event.preventDefault()" onclick="formatDoc('formatBlock', 'h1')" title="H1" class="p-1 hover:bg-gray-200 border border-transparent hover:border-gray-900 min-w-[28px]">H1</button>
+                                    <button type="button" data-cmd="h2" onmousedown="event.preventDefault()" onclick="formatDoc('formatBlock', 'h2')" title="H2" class="p-1 hover:bg-gray-200 border border-transparent hover:border-gray-900 min-w-[28px]">H2</button>
+                                    <button type="button" data-cmd="h3" onmousedown="event.preventDefault()" onclick="formatDoc('formatBlock', 'h3')" title="H3" class="p-1 hover:bg-gray-200 border border-transparent hover:border-gray-900 min-w-[28px]">H3</button>
+                                    <div class="w-[1px] h-4 bg-gray-900 mx-1"></div>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="insertCodeBlock('new')" title="Code Block" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-code"></i></button>
+                                    <button type="button" onmousedown="event.preventDefault()" onclick="insertTable('new')" title="Insert Table" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-table"></i></button>
+                                    <div class="w-[1px] h-4 bg-gray-900 mx-1"></div>
+                                    
+                                    <!-- Font Selection -->
+                                    <select onchange="formatDoc('fontName', this.value); this.selectedIndex=0;" class="p-1 border border-gray-900 text-xs bg-white cursor-pointer font-sans min-w-[110px]" style="border-radius: 0px !important;">
+                                        <option value="" disabled selected>Select Font</option>
+                                        <option value="Inter">Inter (Sans)</option>
+                                        <option value="Outfit">Outfit (Round)</option>
+                                        <option value="Fira Code">Fira Code (Mono)</option>
+                                        <option value="Playfair Display">Playfair Display (Serif)</option>
+                                        <option value="Lora">Lora (Elegant)</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- EDITABLE WORKSPACE -->
+                                <div id="snippet-wysiwyg" contenteditable="true" class="p-4 min-h-[160px] max-h-[350px] overflow-y-auto outline-none prose max-w-none text-sm font-sans focus:ring-0 bg-white" placeholder="Paste or type your snippet here..."></div>
+                            </div>
+                            
+                            <!-- Original text area kept hidden to maintain sync -->
+                            <textarea id="snippet-text" class="hidden"></textarea>
                         </div>
                         <div>
                             <label for="snippet-url" class="block text-sm font-medium text-gray-700 mb-1">Source URL (Optional)</label>
@@ -258,20 +311,30 @@
                     </button>
                 </section>
 
-                <section id="output-section" class="bg-white p-6 sm:p-8 rounded-xl shadow-xl border border-gray-100">
-                    <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-3">
-                        <h2 class="text-2xl font-semibold text-gray-700 mb-3 sm:mb-0">My Saved Snippets</h2>
-                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
-                            <input type="text" id="search-input" placeholder="Search snippets..." class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-indigo-500 text-sm">
-                            <select id="filter-category" class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-indigo-500 bg-white text-sm">
-                                <option value="">All Categories</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="snippets-list" class="space-y-6"></div>
-                </section>
             </main>
         </div> 
+
+        <!-- DEDICATED SNIPPETS VIEW SECTION -->
+        <div id="snippets-view" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-2xl mt-4 border border-gray-100">
+            <button id="back-from-snippets-btn" class="mb-6 bg-gray-250 hover:bg-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow transition-colors duration-150 text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Creator
+            </button>
+            <h2 class="text-3xl font-extrabold mb-6 text-indigo-600 border-b pb-4">Saved Snippets</h2>
+            
+            <div class="flex flex-col sm:flex-row justify-between items-center mb-6 border-b pb-3">
+                <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                    <input type="text" id="search-input" placeholder="Search snippets..." class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-indigo-500 text-sm">
+                    <select id="filter-category" class="w-full sm:w-auto p-2 border border-gray-300 rounded-lg shadow-sm focus:ring-1 focus:ring-indigo-500 bg-white text-sm">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Snippet UI Constraints: fixed container size with smooth vertical scrolling -->
+            <div class="max-h-[500px] overflow-y-auto pr-2 scroll-smooth border border-gray-200 p-4 bg-gray-50/50">
+                <div id="snippets-list" class="space-y-6"></div>
+            </div>
+        </div>
 
         <!-- DETAIL/EDIT VIEW -->
         <div id="detail-view" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-2xl mt-4 border border-gray-100">
@@ -311,7 +374,42 @@
                  <input type="hidden" id="edit-snippet-id">
                 <div>
                     <label for="edit-snippet-text" class="block text-sm font-medium text-gray-700 mb-1">Snippet Content <span class="text-red-500">*</span></label>
-                    <textarea id="edit-snippet-text" rows="6" class="w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-indigo-500 text-sm font-mono"></textarea>
+                    
+                    <!-- WYSIWYG EDITOR CONTAINER FOR EDIT -->
+                    <div class="border-2 border-gray-900 bg-white shadow-[3px_3px_0px_0px_#1f2937] mb-3">
+                        <!-- TOOLBAR -->
+                        <div class="flex flex-wrap items-center bg-gray-50 border-b-2 border-gray-900 p-1.5 gap-1 select-none font-mono text-xs font-bold uppercase">
+                            <button type="button" data-cmd="bold" onmousedown="event.preventDefault()" onclick="formatDoc('bold')" title="Bold" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-bold"></i></button>
+                            <button type="button" data-cmd="italic" onmousedown="event.preventDefault()" onclick="formatDoc('italic')" title="Italic" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-italic"></i></button>
+                            <div class="w-[1px] h-4 bg-gray-900 mx-1"></div>
+                            <button type="button" data-cmd="insertUnorderedList" onmousedown="event.preventDefault()" onclick="formatDoc('insertUnorderedList')" title="Bullet List" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-list-ul"></i></button>
+                            <button type="button" data-cmd="insertOrderedList" onmousedown="event.preventDefault()" onclick="formatDoc('insertOrderedList')" title="Numbered List" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-list-ol"></i></button>
+                            <div class="w-[1px] h-4 bg-gray-900 mx-1"></div>
+                            <button type="button" data-cmd="h1" onmousedown="event.preventDefault()" onclick="formatDoc('formatBlock', 'h1')" title="H1" class="p-1 hover:bg-gray-200 border border-transparent hover:border-gray-900 min-w-[28px]">H1</button>
+                            <button type="button" data-cmd="h2" onmousedown="event.preventDefault()" onclick="formatDoc('formatBlock', 'h2')" title="H2" class="p-1 hover:bg-gray-200 border border-transparent hover:border-gray-900 min-w-[28px]">H2</button>
+                            <button type="button" data-cmd="h3" onmousedown="event.preventDefault()" onclick="formatDoc('formatBlock', 'h3')" title="H3" class="p-1 hover:bg-gray-200 border border-transparent hover:border-gray-900 min-w-[28px]">H3</button>
+                            <div class="w-[1px] h-4 bg-gray-900 mx-1"></div>
+                            <button type="button" onmousedown="event.preventDefault()" onclick="insertCodeBlock('edit')" title="Code Block" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-code"></i></button>
+                            <button type="button" onmousedown="event.preventDefault()" onclick="insertTable('edit')" title="Insert Table" class="p-1.5 hover:bg-gray-200 border border-transparent hover:border-gray-900 flex items-center justify-center min-w-[28px]"><i class="fas fa-table"></i></button>
+                            <div class="w-[1px] h-4 bg-gray-900 mx-1"></div>
+                            
+                            <!-- Font Selection -->
+                            <select onchange="formatDoc('fontName', this.value); this.selectedIndex=0;" class="p-1 border border-gray-900 text-xs bg-white cursor-pointer font-sans min-w-[110px]" style="border-radius: 0px !important;">
+                                <option value="" disabled selected>Select Font</option>
+                                <option value="Inter">Inter (Sans)</option>
+                                <option value="Outfit">Outfit (Round)</option>
+                                <option value="Fira Code">Fira Code (Mono)</option>
+                                <option value="Playfair Display">Playfair Display (Serif)</option>
+                                <option value="Lora">Lora (Elegant)</option>
+                            </select>
+                        </div>
+                        
+                        <!-- EDITABLE WORKSPACE FOR EDIT -->
+                        <div id="edit-snippet-wysiwyg" contenteditable="true" class="p-4 min-h-[160px] max-h-[350px] overflow-y-auto outline-none prose max-w-none text-sm font-sans focus:ring-0 bg-white" placeholder="Paste or type your snippet here..."></div>
+                    </div>
+                    
+                    <!-- Original text area kept hidden to maintain sync -->
+                    <textarea id="edit-snippet-text" class="hidden"></textarea>
                 </div>
                 <div>
                     <label for="edit-snippet-url" class="block text-sm font-medium text-gray-700 mb-1">Source URL</label>

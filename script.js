@@ -224,6 +224,8 @@ document.addEventListener('DOMContentLoaded', () => {
     } 
 
 
+    let introBypassed = false;
+
     // --- DOM Elements ---
     const snippetTextEl = document.getElementById('snippet-text');
     const snippetUrlEl = document.getElementById('snippet-url');
@@ -473,6 +475,8 @@ const migrateNameEl = document.getElementById('migrate-name');
         if(mainViewEl) mainViewEl.classList.remove('hidden');
         if(detailViewEl) detailViewEl.classList.add('hidden');
         if(accountViewEl) accountViewEl.classList.add('hidden');
+        const snippetsViewEl = document.getElementById('snippets-view');
+        if(snippetsViewEl) snippetsViewEl.classList.add('hidden');
         currentEditingSnippetId = null; 
         renderSnippets(); 
     }
@@ -487,6 +491,8 @@ const migrateNameEl = document.getElementById('migrate-name');
         currentEditingSnippetId = snippet.id;
         if(mainViewEl) mainViewEl.classList.add('hidden');
         if(accountViewEl) accountViewEl.classList.add('hidden');
+        const snippetsViewEl = document.getElementById('snippets-view');
+        if(snippetsViewEl) snippetsViewEl.classList.add('hidden');
         if(detailViewEl) detailViewEl.classList.remove('hidden');
 
         if (mode === 'view') {
@@ -494,7 +500,7 @@ const migrateNameEl = document.getElementById('migrate-name');
             if(detailContentEditEl) detailContentEditEl.classList.add('hidden');
             if(detailTitleEl) detailTitleEl.textContent = "Snippet Details";
             if(detailCategoryViewEl) detailCategoryViewEl.textContent = snippet.category;
-            if(detailTextViewEl) detailTextViewEl.textContent = snippet.text;
+            if(detailTextViewEl) detailTextViewEl.innerHTML = snippet.text;
             
             if (snippet.url) {
                 if(detailUrlViewEl) {
@@ -518,7 +524,11 @@ const migrateNameEl = document.getElementById('migrate-name');
             if(detailContentEditEl) detailContentEditEl.classList.remove('hidden');
             if(detailTitleEl) detailTitleEl.textContent = "Edit Snippet";
             if(editSnippetIdEl) editSnippetIdEl.value = snippet.id;
-            if(editSnippetTextEl) editSnippetTextEl.value = snippet.text;
+            if(editSnippetTextEl) {
+                editSnippetTextEl.value = snippet.text;
+                const editWysiwyg = document.getElementById('edit-snippet-wysiwyg');
+                if (editWysiwyg) editWysiwyg.innerHTML = snippet.text;
+            }
             if(editSnippetUrlEl) editSnippetUrlEl.value = snippet.url || '';
             populateCategoryDropdown(editSnippetCategoryEl, localCategoriesCache); 
             if(editSnippetCategoryEl) editSnippetCategoryEl.value = snippet.category; 
@@ -544,8 +554,12 @@ const migrateNameEl = document.getElementById('migrate-name');
 
     // --- Intro Animation ---
     function playIntroAnimation(onCompleteCallback) {
-        if (localStorage.getItem("snipvault_skip_intro") === "true") {
-            localStorage.removeItem("snipvault_skip_intro");
+        if (sessionStorage.getItem("snipvault_startup_done") === "true" || introBypassed || localStorage.getItem("snipvault_skip_intro") === "true") {
+            introBypassed = true;
+            sessionStorage.setItem("snipvault_startup_done", "true");
+            setTimeout(() => {
+                localStorage.removeItem("snipvault_skip_intro");
+            }, 1000);
             if (introOverlay) {
                 introOverlay.style.display = 'none';
                 introOverlay.style.opacity = '0';
@@ -554,6 +568,8 @@ const migrateNameEl = document.getElementById('migrate-name');
             if (onCompleteCallback) onCompleteCallback();
             return;
         }
+
+        sessionStorage.setItem("snipvault_startup_done", "true");
 
         if (!introOverlay) { 
             if(onCompleteCallback) onCompleteCallback();
@@ -566,7 +582,9 @@ const migrateNameEl = document.getElementById('migrate-name');
         introOverlay.style.opacity = '1'; 
         introOverlay.style.pointerEvents = 'auto';
 
-        if(dynamicLogo) dynamicLogo.classList.add('animate-pop');
+        const introCard = document.getElementById('intro-card');
+        if(introCard) introCard.classList.add('animate-pop');
+        if(dynamicLogo) dynamicLogo.classList.add('animate-pulse');
         if(introSubtitle) setTimeout(() => introSubtitle.classList.add('animate-fade-in-up'), 300);
         
         setTimeout(() => { 
@@ -589,6 +607,8 @@ const migrateNameEl = document.getElementById('migrate-name');
         if (!sessionToken || sessionToken === "guest") return;
         if(mainViewEl) mainViewEl.classList.add('hidden');
         if(detailViewEl) detailViewEl.classList.add('hidden');
+        const snippetsViewEl = document.getElementById('snippets-view');
+        if(snippetsViewEl) snippetsViewEl.classList.add('hidden');
         if(accountViewEl) accountViewEl.classList.remove('hidden');
         
         // Populate profile views
@@ -2056,9 +2076,9 @@ const migrateNameEl = document.getElementById('migrate-name');
             actionsDiv.appendChild(deleteBtn);
             headerDiv.appendChild(actionsDiv);
             snippetItem.appendChild(headerDiv);
-            const textPreviewP = document.createElement('p');
-            textPreviewP.className = 'snippet-text-preview';
-            textPreviewP.textContent = snippet.text;
+            const textPreviewP = document.createElement('div');
+            textPreviewP.className = 'snippet-text-preview max-h-[120px] overflow-hidden whitespace-normal break-words prose max-w-none';
+            textPreviewP.innerHTML = snippet.text;
             snippetItem.appendChild(textPreviewP);
             const readMoreBtn = document.createElement('button');
             readMoreBtn.className = 'read-more-btn';
@@ -2342,7 +2362,11 @@ const migrateNameEl = document.getElementById('migrate-name');
 
     // --- Event Listeners ---
     if(addCategoryBtn) addCategoryBtn.addEventListener('click', handleAddCategory);
-    if(saveSnippetBtn) saveSnippetBtn.addEventListener('click', handleSaveSnippet);
+    if(saveSnippetBtn) saveSnippetBtn.addEventListener('click', async () => {
+        await handleSaveSnippet();
+        const snippetWysiwyg = document.getElementById('snippet-wysiwyg');
+        if(snippetWysiwyg) snippetWysiwyg.innerHTML = '';
+    });
     if(searchInputEl) searchInputEl.addEventListener('input', () => renderSnippets()); 
     if(filterCategoryEl) filterCategoryEl.addEventListener('change', () => renderSnippets()); 
 
@@ -2863,6 +2887,177 @@ const migrateNameEl = document.getElementById('migrate-name');
             hideCustomContextMenu();
             localStorage.setItem("snipvault_skip_intro", "true");
             window.location.href = "opensource.html";
+        });
+    }
+
+    // --- Dedicated Page/Section Navigation Controls ---
+    const toggleSnippetsViewBtn = document.getElementById('toggle-snippets-view-btn');
+    const backFromSnippetsBtn = document.getElementById('back-from-snippets-btn');
+    const snippetsViewEl = document.getElementById('snippets-view');
+
+    function showSnippetsView() {
+        if(mainViewEl) mainViewEl.classList.add('hidden');
+        if(detailViewEl) detailViewEl.classList.add('hidden');
+        if(accountViewEl) accountViewEl.classList.add('hidden');
+        if(snippetsViewEl) snippetsViewEl.classList.remove('hidden');
+        renderSnippets();
+    }
+
+    // Connect page navigations
+    if(toggleSnippetsViewBtn) toggleSnippetsViewBtn.addEventListener('click', showSnippetsView);
+    if(backFromSnippetsBtn) backFromSnippetsBtn.addEventListener('click', showMainView);
+
+
+
+    // --- Rich Text WYSIWYG Editor Helpers & Sync ---
+    const snippetWysiwyg = document.getElementById('snippet-wysiwyg');
+    const editSnippetWysiwyg = document.getElementById('edit-snippet-wysiwyg');
+
+    window.formatDoc = function(cmd, value = null) {
+        if (cmd === 'formatBlock' && value && !value.startsWith('<')) {
+            value = `<${value}>`;
+        }
+        document.execCommand(cmd, false, value);
+        if (typeof updateEditorToolbarActiveStates === 'function') {
+            updateEditorToolbarActiveStates();
+        }
+    };
+
+    window.insertCodeBlock = function(type) {
+        const editor = document.getElementById(type === 'new' ? 'snippet-wysiwyg' : 'edit-snippet-wysiwyg');
+        if (!editor) return;
+        
+        const pre = document.createElement('pre');
+        pre.className = "bg-gray-900 text-green-400 p-3 font-mono text-xs my-2 overflow-x-auto border-l-4 border-indigo-500";
+        const code = document.createElement('code');
+        code.textContent = '// Paste or type your code here\n';
+        pre.appendChild(code);
+        
+        editor.focus();
+        const sel = window.getSelection();
+        if (sel.getRangeAt && sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(pre);
+        } else {
+            editor.appendChild(pre);
+        }
+        window.syncWYSIWYGToTextarea(type);
+    };
+
+    window.insertTable = function(type) {
+        const editor = document.getElementById(type === 'new' ? 'snippet-wysiwyg' : 'edit-snippet-wysiwyg');
+        if (!editor) return;
+        
+        const table = document.createElement('table');
+        table.className = "min-w-full text-xs text-left border border-gray-300 mt-2";
+        
+        const thead = document.createElement('thead');
+        thead.className = "bg-gray-100 font-bold border-b border-gray-300";
+        const headerRow = document.createElement('tr');
+        for (let i = 1; i <= 3; i++) {
+            const th = document.createElement('th');
+            th.className = "p-2 border border-gray-300 font-bold";
+            th.textContent = `Header ${i}`;
+            headerRow.appendChild(th);
+        }
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+        
+        const tbody = document.createElement('tbody');
+        for (let r = 1; r <= 2; r++) {
+            const row = document.createElement('tr');
+            row.className = "border-b border-gray-200 hover:bg-gray-50";
+            for (let c = 1; c <= 3; c++) {
+                const td = document.createElement('td');
+                td.className = "p-2 border border-gray-300";
+                td.textContent = `Cell ${r}-${c}`;
+                row.appendChild(td);
+            }
+            tbody.appendChild(row);
+        }
+        table.appendChild(tbody);
+        
+        editor.focus();
+        const sel = window.getSelection();
+        if (sel.getRangeAt && sel.rangeCount) {
+            const range = sel.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(table);
+        } else {
+            editor.appendChild(table);
+        }
+        window.syncWYSIWYGToTextarea(type);
+    };
+
+    window.syncWYSIWYGToTextarea = function(type) {
+        if (type === 'new') {
+            if (snippetWysiwyg && snippetTextEl) {
+                snippetTextEl.value = snippetWysiwyg.innerHTML;
+            }
+        } else {
+            if (editSnippetWysiwyg && editSnippetTextEl) {
+                editSnippetTextEl.value = editSnippetWysiwyg.innerHTML;
+            }
+        }
+    };
+
+    // Listen to editor keyup/input to sync immediately to hidden input form field
+    if (snippetWysiwyg && snippetTextEl) {
+        ['input', 'keyup', 'blur', 'paste'].forEach(evt => {
+            snippetWysiwyg.addEventListener(evt, () => window.syncWYSIWYGToTextarea('new'));
+        });
+    }
+    if (editSnippetWysiwyg && editSnippetTextEl) {
+        ['input', 'keyup', 'blur', 'paste'].forEach(evt => {
+            editSnippetWysiwyg.addEventListener(evt, () => window.syncWYSIWYGToTextarea('edit'));
+        });
+    }
+
+    // --- Toolbar Active State Handler ---
+    function updateEditorToolbarActiveStates() {
+        const activeEl = document.activeElement;
+        const isNewEditor = activeEl && activeEl.id === 'snippet-wysiwyg';
+        const isEditEditor = activeEl && activeEl.id === 'edit-snippet-wysiwyg';
+        
+        if (!isNewEditor && !isEditEditor) return;
+        
+        const container = activeEl.closest('.border-2.border-gray-900');
+        if (!container) return;
+        
+        const buttons = container.querySelectorAll('button[data-cmd]');
+        buttons.forEach(btn => {
+            const cmd = btn.getAttribute('data-cmd');
+            let isActive = false;
+            
+            if (cmd === 'bold' || cmd === 'italic' || cmd === 'insertUnorderedList' || cmd === 'insertOrderedList') {
+                try {
+                    isActive = document.queryCommandState(cmd);
+                } catch(e) {}
+            } else if (cmd === 'h1' || cmd === 'h2' || cmd === 'h3') {
+                try {
+                    const val = document.queryCommandValue('formatBlock');
+                    isActive = (val === cmd || val === `<${cmd}>`);
+                } catch(e) {}
+            }
+            
+            if (isActive) {
+                btn.classList.add('editor-btn-active');
+            } else {
+                btn.classList.remove('editor-btn-active');
+            }
+        });
+    }
+
+    document.addEventListener('selectionchange', updateEditorToolbarActiveStates);
+    if (snippetWysiwyg) {
+        ['keyup', 'mouseup', 'input', 'focus'].forEach(evt => {
+            snippetWysiwyg.addEventListener(evt, updateEditorToolbarActiveStates);
+        });
+    }
+    if (editSnippetWysiwyg) {
+        ['keyup', 'mouseup', 'input', 'focus'].forEach(evt => {
+            editSnippetWysiwyg.addEventListener(evt, updateEditorToolbarActiveStates);
         });
     }
 

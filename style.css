@@ -6,14 +6,14 @@ body {
 
 /* --- Intro Animation --- */
 #intro-overlay { z-index: 6000; /* Ensure intro is on very top */ }
-#dynamic-logo { font-family: 'Pacifico', cursive; }
+#dynamic-logo { font-family: monospace; }
 @keyframes logoPopIn {
-  0% { transform: scale(0.5); opacity: 0; }
-  70% { transform: scale(1.1); opacity: 1; }
-  100% { transform: scale(1); opacity: 1; }
+  0% { transform: scale(0.9) rotate(-1deg); opacity: 0; }
+  70% { transform: scale(1.03) rotate(0.5deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
-#dynamic-logo.animate-pop { animation: logoPopIn 0.8s ease-out forwards; }
-#intro-subtitle.animate-fade-in-up { animation: fadeInUp 0.6s 0.5s ease-out forwards; }
+#intro-card { animation: logoPopIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+#intro-subtitle.animate-fade-in-up { animation: fadeInUp 0.6s 0.6s ease-out forwards; }
 
 /* --- App Container Animation --- */
 #app-container.loaded {
@@ -299,7 +299,8 @@ button:disabled, button[disabled] {
 #save-crop-btn, #cancel-crop-btn, #revoke-all-others-btn,
 .dev-btn,
 #auth-policy-agree-btn, #guest-policy-agree-btn, #migrate-policy-agree-btn,
-#login-submit-btn, #signup-submit-btn {
+#login-submit-btn, #signup-submit-btn,
+#toggle-snippets-view-btn, #back-from-snippets-btn {
   border: 2px solid #1f2937 !important;
   box-shadow: 3px 3px 0px 0px #1f2937 !important;
   font-family: monospace;
@@ -316,7 +317,8 @@ button:disabled, button[disabled] {
 #save-edited-snippet-btn:hover:not(:disabled), #back-from-account-btn:hover:not(:disabled),
 .dev-btn:hover:not(:disabled),
 #auth-policy-agree-btn:hover:not(:disabled), #guest-policy-agree-btn:hover:not(:disabled), #migrate-policy-agree-btn:hover:not(:disabled),
-#login-submit-btn:hover:not(:disabled), #signup-submit-btn:hover:not(:disabled) {
+#login-submit-btn:hover:not(:disabled), #signup-submit-btn:hover:not(:disabled),
+#toggle-snippets-view-btn:hover:not(:disabled), #back-from-snippets-btn:hover:not(:disabled) {
   transform: translate(-1px, -1px) !important;
   box-shadow: 4px 4px 0px 0px #1f2937 !important;
 }
@@ -327,7 +329,8 @@ button:disabled, button[disabled] {
 #save-edited-snippet-btn:active:not(:disabled), #back-from-account-btn:active:not(:disabled),
 .dev-btn:active:not(:disabled),
 #auth-policy-agree-btn:active:not(:disabled), #guest-policy-agree-btn:active:not(:disabled), #migrate-policy-agree-btn:active:not(:disabled),
-#login-submit-btn:active:not(:disabled), #signup-submit-btn:active:not(:disabled) {
+#login-submit-btn:active:not(:disabled), #signup-submit-btn:active:not(:disabled),
+#toggle-snippets-view-btn:active:not(:disabled), #back-from-snippets-btn:active:not(:disabled) {
   transform: translate(1px, 1px) !important;
   box-shadow: 1px 1px 0px 0px #1f2937 !important;
 }
@@ -360,11 +363,11 @@ button:disabled, button[disabled] {
 }
 
 /* Indigo-hued agreement / account buttons override */
-#auth-policy-agree-btn, #guest-policy-agree-btn, #migrate-policy-agree-btn, #toggle-account-btn, #login-submit-btn, #signup-submit-btn {
+#auth-policy-agree-btn, #guest-policy-agree-btn, #migrate-policy-agree-btn, #toggle-account-btn, #login-submit-btn, #signup-submit-btn, #toggle-snippets-view-btn, #back-from-snippets-btn {
   background-color: #e0e7ff !important;
   color: #1e1b4b !important;
 }
-#auth-policy-agree-btn:hover:not(:disabled), #guest-policy-agree-btn:hover:not(:disabled), #migrate-policy-agree-btn:hover:not(:disabled), #toggle-account-btn:hover:not(:disabled), #login-submit-btn:hover:not(:disabled), #signup-submit-btn:hover:not(:disabled) {
+#auth-policy-agree-btn:hover:not(:disabled), #guest-policy-agree-btn:hover:not(:disabled), #migrate-policy-agree-btn:hover:not(:disabled), #toggle-account-btn:hover:not(:disabled), #login-submit-btn:hover:not(:disabled), #signup-submit-btn:hover:not(:disabled), #toggle-snippets-view-btn:hover:not(:disabled), #back-from-snippets-btn:hover:not(:disabled) {
   background-color: #c7d2fe !important;
 }
 
@@ -411,4 +414,52 @@ td {
   border-radius: 0px !important;
   border: 2px solid #1f2937 !important;
 }
+
+/* --- Editor Toolbar Active Button Style --- */
+.editor-btn-active {
+  background-color: #1f2937 !important; /* gray-900 */
+  color: #ffffff !important;
+  border-color: #1f2937 !important;
+}
+
+/* --- Rich Text WYSIWYG Content & Preview Styles --- */
+.prose ul, #detail-text-view ul {
+  list-style-type: disc !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.prose ol, #detail-text-view ol {
+  list-style-type: decimal !important;
+  padding-left: 1.5rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+.prose li, #detail-text-view li {
+  margin-top: 0.25rem !important;
+  margin-bottom: 0.25rem !important;
+  display: list-item !important;
+}
+.prose h1, #detail-text-view h1 {
+  font-size: 1.8rem !important;
+  font-weight: 850 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+  display: block !important;
+}
+.prose h2, #detail-text-view h2 {
+  font-size: 1.5rem !important;
+  font-weight: 700 !important;
+  margin-top: 0.85rem !important;
+  margin-bottom: 0.4rem !important;
+  display: block !important;
+}
+.prose h3, #detail-text-view h3 {
+  font-size: 1.25rem !important;
+  font-weight: 600 !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.3rem !important;
+  display: block !important;
+}
+
 
